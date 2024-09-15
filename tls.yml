@@ -1,0 +1,15 @@
+tls:
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /etc/traefik/certs/cert.pem # usando wildcard para subdominios
+        keyFile: /etc/traefik/certs/privkey.pem
+   # certificates:
+  #    - certFile: /etc/traefik/certs/traefik-cert.pem # aqui eu gerei mkcert traefik.local.dev
+  #      keyFile: /etc/traefik/certs/traefik-privkey.pem
+  # #   - certFile: /etc/traefik/certs/portainer-cert.pem  # Certificado do Portainer aqui portainer.local.dev
+  # #     keyFile: /etc/traefik/certs/portainer-privkey.pem  # Chave do Portainer
+  # #   - certFile: /etc/traefik/certs/edge-cert.pem # Certificado do Edge edge.local.dev
+  # #     keyFile: /etc/traefik/certs/edge-privkey.pem # Chave do Edge
+  #    - certFile: /etc/traefik/certs/estouon.dev.pem # aqui eu gerei mkcert traefik.local.dev
+  #      keyFile: /etc/traefik/certs/estouon.dev-key.pem
