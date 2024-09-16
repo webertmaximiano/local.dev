@@ -1,4 +1,4 @@
-Local Development Environment with Traefik and Portainer
+<h1>Local Development Environment with Traefik and Portainer</h1>
 This repository provides a configuration to set up a local development environment using Traefik and Portainer. It aims to help developers, especially students, get familiar with containers, reverse proxy, and load balancing in Docker-based projects. This setup is designed to simplify the management of local development environments.
 
 Features
