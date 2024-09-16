@@ -112,8 +112,8 @@ The `docker-compose.yml` sets up two main services:
 
     You can add more services to the `docker-compose.yml` as needed.
 
-## Suporte e Comunidade
+## Support and Community
 
-Este projeto foi criado com o foco principal de ajudar os alunos do projeto social [Agilizando o Futuro](https://agilizando.clubesiga.com.br/), que busca capacitar desenvolvedores ágeis para o mercado de trabalho. Se você precisar de ajuda ou tiver alguma dúvida, junte-se à nossa comunidade no [Discord](https://discord.gg/Hra9vrqgxJ), onde estaremos disponíveis para fornecer suporte.
+This project was created with the primary goal of helping students from the social initiative [Agilizando o Futuro](https://agilizando.clubesiga.com.br/), which aims to train agile developers for the job market. If you need help or have any questions, join our community on [Discord](https://discord.gg/Hra9vrqgxJ), where we are available to provide support.
 
-Esperamos que este ambiente de desenvolvimento local com Traefik e Portainer facilite o aprendizado e a compreensão de conceitos como containers, proxy reverso e balanceamento de carga. Boa sorte e bons estudos!
+We hope this local development environment with Traefik and Portainer facilitates learning and understanding of concepts such as containers, reverse proxy, and load balancing. Good luck and happy learning!
