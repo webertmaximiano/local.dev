@@ -1,107 +1,28 @@
-<h1>Local Development Environment with Traefik and Portainer</h1>
-
-This repository provides a configuration to set up a local development environment using Traefik and Portainer. It aims to help developers, especially students, get familiar with containers, reverse proxy, and load balancing in Docker-based projects. This setup is designed to simplify the management of local development environments.
-
-<h4>Features</h4>
-
-<strong>Traefik:</strong> A modern reverse proxy and load balancer for Docker and Kubernetes environments.
-
-<strong>Portainer:</strong> A lightweight management UI that allows you to manage your Docker environments.
-HTTPS by default: Automatically redirects HTTP traffic to HTTPS.
-Local development domains: Configure multiple local domains for different services (e.g., traefik.local.dev, portainer.local.dev, edge.local.dev).
-Docker socket: Traefik interacts directly with Docker to automatically configure services based on labels.
-Prerequisites
-Before using this setup, ensure you have the following installed:
-
-Docker
-Docker Compose
-mkcert (optional, for local HTTPS certificates)
-Setup Instructions
-Clone the Repository
-
-bash
-Copiar código
-git clone https://github.com/webertmaximiano/local.dev.git
-cd local.dev
-Generate Local Certificates (Optional but Recommended)
-
-If you have mkcert installed, generate local certificates for your development domains:
-
-bash
-Copiar código
-mkcert -install
+<div class="flex w-full flex-col gap-1 empty:hidden first:pt-[3px]"><div class="markdown prose w-full break-words dark:prose-invert light"><hr><h1>Local Development Environment with Traefik and Portainer</h1><p>This repository provides a configuration to set up a local development environment using Traefik and Portainer. It aims to help developers, especially students, get familiar with containers, reverse proxy, and load balancing in Docker-based projects. This setup is designed to simplify the management of local development environments.</p><h2>Features</h2><ul><li><strong>Traefik</strong>: A modern reverse proxy and load balancer for Docker and Kubernetes environments.</li><li><strong>Portainer</strong>: A lightweight management UI that allows you to manage your Docker environments.</li><li><strong>HTTPS by default</strong>: Automatically redirects HTTP traffic to HTTPS.</li><li><strong>Local development domains</strong>: Configure multiple local domains for different services (e.g., <code>traefik.local.dev</code>, <code>portainer.local.dev</code>, <code>edge.local.dev</code>).</li><li><strong>Docker socket</strong>: Traefik interacts directly with Docker to automatically configure services based on labels.</li></ul><h2>Prerequisites</h2><p>Before using this setup, ensure you have the following installed:</p><ul><li><a rel="noopener" target="_new">Docker</a></li><li><a rel="noopener" target="_new">Docker Compose</a></li><li><a rel="noopener" target="_new" href="https://github.com/FiloSottile/mkcert">mkcert</a> (optional, for local HTTPS certificates)</li></ul><h2>Setup Instructions</h2><ol><li><p><strong>Clone the Repository</strong></p><pre class="!overflow-visible"><div class="dark bg-gray-950 contain-inline-size rounded-md border-[0.5px] border-token-border-medium relative"><div class="flex items-center text-token-text-secondary bg-token-main-surface-secondary px-4 py-2 text-xs font-sans justify-between rounded-t-md h-9">bash</div><div class="sticky top-9 md:top-[5.75rem]"><div class="absolute bottom-0 right-2 flex h-9 items-center"><div class="flex items-center rounded bg-token-main-surface-secondary px-2 font-sans text-xs text-token-text-secondary"><span class="" data-state="closed"><button class="flex gap-1 items-center py-1"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon-sm"><path fill-rule="evenodd" clip-rule="evenodd" d="M7 5C7 3.34315 8.34315 2 10 2H19C20.6569 2 22 3.34315 22 5V14C22 15.6569 20.6569 17 19 17H17V19C17 20.6569 15.6569 22 14 22H5C3.34315 22 2 20.6569 2 19V10C2 8.34315 3.34315 7 5 7H7V5ZM9 7H14C15.6569 7 17 8.34315 17 10V15H19C19.5523 15 20 14.5523 20 14V5C20 4.44772 19.5523 4 19 4H10C9.44772 4 9 4.44772 9 5V7ZM5 9C4.44772 9 4 9.44772 4 10V19C4 19.5523 4.44772 20 5 20H14C14.5523 20 15 19.5523 15 19V10C15 9.44772 14.5523 9 14 9H5Z" fill="currentColor"></path></svg>Copiar código</button></span></div></div></div><div class="overflow-y-auto p-4" dir="ltr"><code class="!whitespace-pre hljs language-bash">git <span class="hljs-built_in">clone</span> https://github.com/webertmaximiano/local.dev.git
+<span class="hljs-built_in">cd</span> local.dev
+</code></div></div></pre></li><li><p><strong>Generate Local Certificates (Optional but Recommended)</strong></p><p>If you have <code>mkcert</code> installed, generate local certificates for your development domains:</p><pre class="!overflow-visible"><div class="dark bg-gray-950 contain-inline-size rounded-md border-[0.5px] border-token-border-medium relative"><div class="flex items-center text-token-text-secondary bg-token-main-surface-secondary px-4 py-2 text-xs font-sans justify-between rounded-t-md h-9">bash</div><div class="sticky top-9 md:top-[5.75rem]"><div class="absolute bottom-0 right-2 flex h-9 items-center"><div class="flex items-center rounded bg-token-main-surface-secondary px-2 font-sans text-xs text-token-text-secondary"><span class="" data-state="closed"><button class="flex gap-1 items-center py-1"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon-sm"><path fill-rule="evenodd" clip-rule="evenodd" d="M7 5C7 3.34315 8.34315 2 10 2H19C20.6569 2 22 3.34315 22 5V14C22 15.6569 20.6569 17 19 17H17V19C17 20.6569 15.6569 22 14 22H5C3.34315 22 2 20.6569 2 19V10C2 8.34315 3.34315 7 5 7H7V5ZM9 7H14C15.6569 7 17 8.34315 17 10V15H19C19.5523 15 20 14.5523 20 14V5C20 4.44772 19.5523 4 19 4H10C9.44772 4 9 4.44772 9 5V7ZM5 9C4.44772 9 4 9.44772 4 10V19C4 19.5523 4.44772 20 5 20H14C14.5523 20 15 19.5523 15 19V10C15 9.44772 14.5523 9 14 9H5Z" fill="currentColor"></path></svg>Copiar código</button></span></div></div></div><div class="overflow-y-auto p-4" dir="ltr"><code class="!whitespace-pre hljs language-bash">mkcert -install
 mkcert traefik.local.dev portainer.local.dev edge.local.dev
-Place the generated certificates in the certs directory within the project folder.
-
-Start the Environment
-
-Use Docker Compose to start the environment:
-
-bash
-Copiar código
-docker-compose up -d
-Access the Services
-
-Traefik Dashboard: https://traefik.local.dev
-Portainer: https://portainer.local.dev
-Edge Service: https://edge.local.dev (example for an additional service)
-Configuration
-Traefik
-Traefik is configured to act as a reverse proxy, routing traffic based on the domain name to the appropriate services. It uses the following key settings:
-
-HTTP to HTTPS redirection: All traffic on port 80 is automatically redirected to HTTPS.
-Local dashboard: You can access the Traefik dashboard at https://traefik.local.dev.
-Portainer
-Portainer is your visual Docker management interface, allowing you to easily manage containers, images, networks, and more.
-
-It runs on https://portainer.local.dev and is secured using HTTPS.
-Custom Domains
-You can modify the domain names (traefik.local.dev, portainer.local.dev, etc.) in the docker-compose.yml to suit your needs. If you're using mkcert, don't forget to generate certificates for the new domains.
-
-Docker Compose Services
-The docker-compose.yml sets up two main services:
-
-Traefik: Handles routing and reverse proxy.
-
-yaml
-Copiar código
-services:
-  traefik:
-    image: traefik:latest
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ${HOME}/local.dev/:/etc/traefik
-    labels:
-      # Redirect HTTP to HTTPS
-      - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
-      - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
-Portainer: A Docker management UI.
-
-yaml
-Copiar código
-services:
-  portainer:
-    image: portainer/portainer-ce:latest
-    ports:
-      - "9000:9000"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.portainer.rule=Host(`portainer.local.dev`)"
-Avoid Committing Certificates
-Ensure that certificates generated locally (in the certs folder) are not committed to your repository by adding them to .gitignore:
-
-bash
-Copiar código
-echo "certs/*" >> .gitignore
-License
-This project is licensed under the MIT License. See the LICENSE file for details.
-
-This README provides clear instructions and context about your setup. Feel free to adjust any details to better fit your project.
-
-
-
-
-
+</code></div></div></pre><p>Place the generated certificates in the <code>certs</code> directory within the project folder.</p></li><li><p><strong>Start the Environment</strong></p><p>Use Docker Compose to start the environment:</p><pre class="!overflow-visible"><div class="dark bg-gray-950 contain-inline-size rounded-md border-[0.5px] border-token-border-medium relative"><div class="flex items-center text-token-text-secondary bg-token-main-surface-secondary px-4 py-2 text-xs font-sans justify-between rounded-t-md h-9">bash</div><div class="sticky top-9 md:top-[5.75rem]"><div class="absolute bottom-0 right-2 flex h-9 items-center"><div class="flex items-center rounded bg-token-main-surface-secondary px-2 font-sans text-xs text-token-text-secondary"><span class="" data-state="closed"><button class="flex gap-1 items-center py-1"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon-sm"><path fill-rule="evenodd" clip-rule="evenodd" d="M7 5C7 3.34315 8.34315 2 10 2H19C20.6569 2 22 3.34315 22 5V14C22 15.6569 20.6569 17 19 17H17V19C17 20.6569 15.6569 22 14 22H5C3.34315 22 2 20.6569 2 19V10C2 8.34315 3.34315 7 5 7H7V5ZM9 7H14C15.6569 7 17 8.34315 17 10V15H19C19.5523 15 20 14.5523 20 14V5C20 4.44772 19.5523 4 19 4H10C9.44772 4 9 4.44772 9 5V7ZM5 9C4.44772 9 4 9.44772 4 10V19C4 19.5523 4.44772 20 5 20H14C14.5523 20 15 19.5523 15 19V10C15 9.44772 14.5523 9 14 9H5Z" fill="currentColor"></path></svg>Copiar código</button></span></div></div></div><div class="overflow-y-auto p-4" dir="ltr"><code class="!whitespace-pre hljs language-bash">docker-compose up -d
+</code></div></div></pre></li><li><p><strong>Access the Services</strong></p><ul><li>Traefik Dashboard: <a rel="noopener" target="_new" href="https://traefik.local.dev">https://traefik.local.dev</a></li><li>Portainer: <a rel="noopener" target="_new" href="https://portainer.local.dev">https://portainer.local.dev</a></li><li>Edge Service: <a rel="noopener" target="_new" href="https://edge.local.dev">https://edge.local.dev</a> (example for an additional service)</li></ul></li></ol><h2>Configuration</h2><h3>Traefik</h3><p>Traefik is configured to act as a reverse proxy, routing traffic based on the domain name to the appropriate services. It uses the following key settings:</p><ul><li><strong>HTTP to HTTPS redirection</strong>: All traffic on port 80 is automatically redirected to HTTPS.</li><li><strong>Local dashboard</strong>: You can access the Traefik dashboard at <code>https://traefik.local.dev</code>.</li></ul><h3>Portainer</h3><p>Portainer is your visual Docker management interface, allowing you to easily manage containers, images, networks, and more.</p><ul><li>It runs on <code>https://portainer.local.dev</code> and is secured using HTTPS.</li></ul><h3>Custom Domains</h3><p>You can modify the domain names (<code>traefik.local.dev</code>, <code>portainer.local.dev</code>, etc.) in the <code>docker-compose.yml</code> to suit your needs. If you're using <code>mkcert</code>, don't forget to generate certificates for the new domains.</p><h2>Docker Compose Services</h2><p>The <code>docker-compose.yml</code> sets up two main services:</p><ol><li><p><strong>Traefik</strong>: Handles routing and reverse proxy.</p><pre class="!overflow-visible"><div class="dark bg-gray-950 contain-inline-size rounded-md border-[0.5px] border-token-border-medium relative"><div class="flex items-center text-token-text-secondary bg-token-main-surface-secondary px-4 py-2 text-xs font-sans justify-between rounded-t-md h-9">yaml</div><div class="sticky top-9 md:top-[5.75rem]"><div class="absolute bottom-0 right-2 flex h-9 items-center"><div class="flex items-center rounded bg-token-main-surface-secondary px-2 font-sans text-xs text-token-text-secondary"><span class="" data-state="closed"><button class="flex gap-1 items-center py-1"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon-sm"><path fill-rule="evenodd" clip-rule="evenodd" d="M7 5C7 3.34315 8.34315 2 10 2H19C20.6569 2 22 3.34315 22 5V14C22 15.6569 20.6569 17 19 17H17V19C17 20.6569 15.6569 22 14 22H5C3.34315 22 2 20.6569 2 19V10C2 8.34315 3.34315 7 5 7H7V5ZM9 7H14C15.6569 7 17 8.34315 17 10V15H19C19.5523 15 20 14.5523 20 14V5C20 4.44772 19.5523 4 19 4H10C9.44772 4 9 4.44772 9 5V7ZM5 9C4.44772 9 4 9.44772 4 10V19C4 19.5523 4.44772 20 5 20H14C14.5523 20 15 19.5523 15 19V10C15 9.44772 14.5523 9 14 9H5Z" fill="currentColor"></path></svg>Copiar código</button></span></div></div></div><div class="overflow-y-auto p-4" dir="ltr"><code class="!whitespace-pre hljs language-yaml"><span class="hljs-attr">services:</span>
+  <span class="hljs-attr">traefik:</span>
+    <span class="hljs-attr">image:</span> <span class="hljs-string">traefik:latest</span>
+    <span class="hljs-attr">ports:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">"80:80"</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">"443:443"</span>
+    <span class="hljs-attr">volumes:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">/var/run/docker.sock:/var/run/docker.sock</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">${HOME}/local.dev/:/etc/traefik</span>
+    <span class="hljs-attr">labels:</span>
+      <span class="hljs-comment"># Redirect HTTP to HTTPS</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">"traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">"traefik.http.routers.http-catchall.middlewares=redirect-to-https"</span>
+</code></div></div></pre></li><li><p><strong>Portainer</strong>: A Docker management UI.</p><pre class="!overflow-visible"><div class="dark bg-gray-950 contain-inline-size rounded-md border-[0.5px] border-token-border-medium relative"><div class="flex items-center text-token-text-secondary bg-token-main-surface-secondary px-4 py-2 text-xs font-sans justify-between rounded-t-md h-9">yaml</div><div class="sticky top-9 md:top-[5.75rem]"><div class="absolute bottom-0 right-2 flex h-9 items-center"><div class="flex items-center rounded bg-token-main-surface-secondary px-2 font-sans text-xs text-token-text-secondary"><span class="" data-state="closed"><button class="flex gap-1 items-center py-1"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon-sm"><path fill-rule="evenodd" clip-rule="evenodd" d="M7 5C7 3.34315 8.34315 2 10 2H19C20.6569 2 22 3.34315 22 5V14C22 15.6569 20.6569 17 19 17H17V19C17 20.6569 15.6569 22 14 22H5C3.34315 22 2 20.6569 2 19V10C2 8.34315 3.34315 7 5 7H7V5ZM9 7H14C15.6569 7 17 8.34315 17 10V15H19C19.5523 15 20 14.5523 20 14V5C20 4.44772 19.5523 4 19 4H10C9.44772 4 9 4.44772 9 5V7ZM5 9C4.44772 9 4 9.44772 4 10V19C4 19.5523 4.44772 20 5 20H14C14.5523 20 15 19.5523 15 19V10C15 9.44772 14.5523 9 14 9H5Z" fill="currentColor"></path></svg>Copiar código</button></span></div></div></div><div class="overflow-y-auto p-4" dir="ltr"><code class="!whitespace-pre hljs language-yaml"><span class="hljs-attr">services:</span>
+  <span class="hljs-attr">portainer:</span>
+    <span class="hljs-attr">image:</span> <span class="hljs-string">portainer/portainer-ce:latest</span>
+    <span class="hljs-attr">ports:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">"9000:9000"</span>
+    <span class="hljs-attr">labels:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">"traefik.enable=true"</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">"traefik.http.routers.portainer.rule=Host(`portainer.local.dev`)"</span>
+</code></div></div></pre></li></ol><h2>Avoid Committing Certificates</h2><p>Ensure that certificates generated locally (in the <code>certs</code> folder) are not committed to your repository by adding them to <code>.gitignore</code>:<h2>Avoid Committing Certificates</h2></p><pre class="!overflow-visible"><div class="dark bg-gray-950 contain-inline-size rounded-md border-[0.5px] border-token-border-medium relative"><div class="flex items-center text-token-text-secondary bg-token-main-surface-secondary px-4 py-2 text-xs font-sans justify-between rounded-t-md h-9">bash</div><div class="sticky top-9 md:top-[5.75rem]"><div class="absolute bottom-0 right-2 flex h-9 items-center"><div class="flex items-center rounded bg-token-main-surface-secondary px-2 font-sans text-xs text-token-text-secondary"><span class="" data-state="closed"><button class="flex gap-1 items-center py-1"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon-sm"><path fill-rule="evenodd" clip-rule="evenodd" d="M7 5C7 3.34315 8.34315 2 10 2H19C20.6569 2 22 3.34315 22 5V14C22 15.6569 20.6569 17 19 17H17V19C17 20.6569 15.6569 22 14 22H5C3.34315 22 2 20.6569 2 19V10C2 8.34315 3.34315 7 5 7H7V5ZM9 7H14C15.6569 7 17 8.34315 17 10V15H19C19.5523 15 20 14.5523 20 14V5C20 4.44772 19.5523 4 19 4H10C9.44772 4 9 4.44772 9 5V7ZM5 9C4.44772 9 4 9.44772 4 10V19C4 19.5523 4.44772 20 5 20H14C14.5523 20 15 19.5523 15 19V10C15 9.44772 14.5523 9 14 9H5Z" fill="currentColor"></path></svg>Copiar código</button></span></div></div></div><div class="overflow-y-auto p-4" dir="ltr"><code class="!whitespace-pre hljs language-bash"><span class="hljs-built_in">echo</span> <span class="hljs-string">"certs/*"</span> &gt;&gt; .gitignore
+</code></div></div></pre><h2>License</h2><p>This project is licensed under the MIT License. See the <a rel="noopener">LICENSE</a> file for details.</p><hr><p>This README provides clear instructions and context about your setup. Feel free to adjust any details to better fit your project.</p></div></div>
