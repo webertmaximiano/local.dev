@@ -33,7 +33,7 @@ Before using this setup, ensure you have the following installed:
 
     ```bash
     mkcert -install
-    mkcert traefik.local.dev portainer.local.dev edge.local.dev
+    mkcert "*.local.dev"
     ```
 
     Place the generated certificates in the `certs` directory within the project folder.
