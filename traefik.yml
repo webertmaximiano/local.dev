@@ -24,4 +24,17 @@ websecure:
       rule: "Host(`traefik.local.dev`)"
       service: api@internal
       entryPoints:
-        - websecure
+#         - websecure
+# # Roteador para o Laravel
+# clubesiga:
+#   rule: "Host(`app.clubesiga.dev`)"
+#   entryPoints:
+#     - web
+#   service: clubesiga-service
+
+# services:
+#   # Serviço para o Laravel
+#   clubesiga-service:
+#     loadBalancer:
+#       servers:
+#         - url: "http://nginx_clube_siga:80"
