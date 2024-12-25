@@ -1,0 +1,48 @@
+[entryPoints]
+  [entryPoints.http]  # Use http instead of web for local development
+    address = ":80"
+
+[certificatesResolvers.file]
+  filename = "/etc/traefik/tls.yml"
+
+[http]
+  routers = ["http-router"]
+  services = ["service-name"]
+
+  [routers.http-router.rule]
+    hosts = ["local.dev"]
+
+  [routers.http-router.entryPoints]
+    - https
+
+  [routers.http-router.service]
+    loadBalancer = {
+      server {
+        url = "http://service-name:80"
+      }
+    }
+
+[log]
+  level = "DEBUG"  # Increase log level for more detailed information (optional)
+  filePath = "/var/log/traefik.log"
+
+[accessLog]
+  filePath = "/var/log/traefik_access.log"
+
+[metrics]
+  [metrics.prometheus]
+    addEntryPointsLabels = true
+    addServicesLabels = true
+    addRoutersLabels = true
+
+[api]
+  dashboard = true
+
+# Let's Encrypt is not recommended for localhost, so we'll remove the certificatesResolvers section
+
+[providers.docker]
+  watch = true
+  network = "local-dev"
+
+[providers.file]
+  filename = "traefik_dynamic.toml"
