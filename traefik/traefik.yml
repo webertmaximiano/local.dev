@@ -9,6 +9,8 @@ entryPoints:
     address: ":80"
   websecure:
     address: ":443"
+  postgres:
+    address: ":5432" 
 
 providers:
   file:
@@ -24,6 +26,8 @@ websecure:
       rule: "Host(`traefik.local.dev`)"
       service: api@internal
       entryPoints:
+
+#       
 #         - websecure
 # # Roteador para o Laravel
 # clubesiga:
