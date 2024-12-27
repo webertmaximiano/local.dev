@@ -26,6 +26,7 @@ services:
       - --providers.docker=true
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
+      - --entryPoints.postgres.address=:5432
       - --log.level=DEBUG # em producao use ERROR
 
     labels:
