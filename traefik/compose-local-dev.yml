@@ -24,8 +24,6 @@ services:
       - --providers.file.filename=/etc/traefik/tls.yml
       - --api.insecure=true
       - --providers.docker=true
-      - --providers.docker.swarmMode=true
-      - --providers.docker.exposedByDefault=false
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
       - --log.level=DEBUG # em producao use ERROR
