@@ -51,7 +51,6 @@ services:
     volumes:
       - portainer_data:/data
     networks:
-      - agent_network
       - web           # rede publica do traefik ou traefic_public
     deploy:
       mode: replicated
