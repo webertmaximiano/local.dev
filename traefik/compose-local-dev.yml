@@ -58,12 +58,14 @@ services:
 
   portainer:
     image: portainer/portainer-ce:2.21.5
-    command: -H tcp://tasks.agent:9001 --tlsskipverify
+    # command: -H tcp://tasks.agent:9001 --tlsskipverify
+    
     ports:
       - "9443:9443"
       - "9000:9000"
       - "8000:8000"
     volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
     networks:
       - agent_network
@@ -75,12 +77,11 @@ services:
       placement:
         constraints: [node.role == manager]
     labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.portainer.rule=Host(`portainer.local.dev`)"
-        # - "traefik.http.routers.portainer.entrypoints=websecure"
-        - "traefik.http.routers.portainer.tls=true"
-        - "traefik.http.routers.portainer.service=portainer"
-        - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+    - "traefik.enable=true"
+    - "traefik.http.routers.portainer.rule=Host(`portainer.local.dev`)"
+    - "traefik.http.routers.portainer.tls=true"
+    - "traefik.http.routers.portainer.service=portainer"
+    - "traefik.http.services.portainer.loadbalancer.server.port=9000"
 networks:
   agent_network:
     driver: overlay
