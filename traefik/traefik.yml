@@ -1,4 +1,4 @@
-logLevel: DEBUG
+logLevel: INFO  # Definição do nível de log global
 
 api:
   insecure: true
@@ -7,10 +7,24 @@ api:
 entryPoints:
   web:
     address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+
   websecure:
     address: ":443"
-  postgres:
-    address: ":5432" 
+  streaming:
+    address: ":1704/udp"
+  mysql:
+    address: ":3306"
+  metrics: # Adicionado entrypoint para as métricas
+    address: ":8082"
+  portainer:
+    address: ":9443"
+  
 
 providers:
   file:
@@ -18,7 +32,8 @@ providers:
   docker:
     endpoint: unix:///var/run/docker.sock
     watch: true
-    exposedByDefault: true
+    exposedByDefault: false #so abre a dash se tiver true
+    network: web-local # Adicionada a rede web-local
 
 websecure:
   routers:
@@ -26,3 +41,12 @@ websecure:
       rule: "Host(`traefik.local.dev`)"
       service: api@internal
       entryPoints:
+
+metrics:
+  prometheus:
+    addEntryPointsLabels: true
+    addServicesLabels: true
+    entryPoint: metrics
+
+# Habilitando Access Logs (opcional, mas recomendado para depuração)
+accessLog: {}
