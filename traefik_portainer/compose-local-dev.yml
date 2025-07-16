@@ -15,6 +15,7 @@ services:
 
     networks:
       - web-local
+
     ports:
       - "80:80"
       - "443:443"
@@ -45,7 +46,7 @@ services:
       - "traefik.http.routers.traefik-dashboard.service=api@internal"
 
   portainer:
-    image: portainer/portainer-ce:2.21.5
+    image: portainer/portainer-ce:latest
     deploy:
       resources:
         limits:
@@ -54,7 +55,6 @@ services:
         reservations:
           cpus: "0.5"
           memory: 256M
-      replicas: 1
       restart_policy:
         condition: on-failure
       mode: replicated
@@ -74,18 +74,16 @@ services:
       - "traefik.http.routers.portainer.rule=Host(`portainer.local.dev`)"
       - "traefik.http.routers.portainer.entrypoints=websecure"
       - "traefik.http.routers.portainer.tls=true"
-      - "traefik.http.routers.portainer.service=portainer"
+      - "traefik.http.routers.portainer.service=portainer@docker"
       - "traefik.http.services.portainer.loadbalancer.server.port=9000"
 
     networks:
       - web-local
-    ports:
-      - "9090:9000"
     
 networks:
   web-local:
     external: true
-    attachable: true # Adicionada a opção attachable
+    #attachable: true # Adicionada a opção attachable para conectar container fora
 
 volumes:
   portainer_data:
