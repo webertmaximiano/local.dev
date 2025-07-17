@@ -1,7 +1,14 @@
+
 # traefik-helm-values.yaml
 
 # Configurações gerais do Traefik
 ports:
+  traefik:
+    port: 8080
+    expose:
+      default: false
+    exposedPort: 8080
+    protocol: TCP
   web:
     port: 8000
     expose:
@@ -54,7 +61,7 @@ service:
 # IngressRoute para o dashboard
 ingressRoute:
   dashboard:
-    enabled: true
+    enabled: true # Habilitado
     matchRule: Host(`traefik.local.dev`)
     entryPoints:
       - websecure # Usar o entrypoint 'websecure' para o dashboard

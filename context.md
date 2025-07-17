@@ -11,12 +11,11 @@ opção marcada
 Show system containers (advanced)
 Show Kubernetes internal containers when using Docker comman
 
-# traefik sem kubernete pasta traefik_portainer
-na pasta traefik_portainer e possive subir a stack e acessar tanto o portainer quanto o traefik usando https e um virtual domain, certificados auto assinados gerados localmente devidamentes configurados.
-
-
 # traefik com kubernetes
 Funcionando 
+
+# Prometheus e Grafana com Kubernets
+Funcionando
 
 # padrão de configuração do traefik
 escolha o melhor que possa ser seguido em um ambiente local de aprendizado e que possa ser replicado em uma vps, 
