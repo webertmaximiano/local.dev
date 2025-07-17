@@ -1,0 +1,66 @@
+# Este arquivo define um Deployment e um Service para o PostgreSQL.
+# Um Deployment gerencia o ciclo de vida dos Pods (instâncias da sua aplicação).
+# Um Service expõe o Deployment para que outras aplicações dentro do cluster possam acessá-lo.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres # Nome do Deployment
+  labels:
+    app: postgres # Rótulo para identificar este Deployment
+spec:
+  replicas: 1 # Define que queremos 1 instância (Pod) do PostgreSQL rodando.
+  selector:
+    matchLabels:
+      app: postgres # O Deployment irá gerenciar Pods com este rótulo.
+  template:
+    metadata:
+      labels:
+        app: postgres # Rótulo aplicado aos Pods criados por este Deployment.
+    spec:
+      containers:
+        - name: postgres # Nome do contêiner dentro do Pod.
+          image: postgres:latest # Imagem Docker a ser usada. 'latest' pega a versão mais recente.
+          env:
+            # Variáveis de ambiente para configurar o PostgreSQL.
+            # Elas são passadas para o contêiner.
+            - name: POSTGRES_DB
+              value: "mydatabase" # Define o nome do banco de dados inicial a ser criado.
+            - name: POSTGRES_USER
+              value: "postgres" # Define o usuário padrão para o banco de dados.
+            - name: POSTGRES_PASSWORD
+              # A senha é obtida de um Secret para segurança.
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret # Nome do Secret onde a senha está armazenada.
+                  key: POSTGRES_PASSWORD # Chave dentro do Secret que contém a senha.
+          ports:
+            - containerPort: 5432 # A porta que o PostgreSQL escuta dentro do contêiner.
+          volumeMounts:
+            # Monta o volume persistente dentro do contêiner.
+            - name: postgres-storage # Nome do volume definido abaixo.
+              mountPath: /var/lib/postgresql/data # Caminho onde o PostgreSQL armazena seus dados dentro do contêiner.
+      volumes:
+        # Define o volume a ser usado pelo contêiner.
+        - name: postgres-storage # Nome do volume, referenciado em volumeMounts.
+          persistentVolumeClaim:
+            claimName: postgres-pvc # Referencia o PVC que criamos para obter o armazenamento.
+
+---
+# Este arquivo também define um Service para o PostgreSQL.
+# Um Service é uma forma abstrata de expor um grupo de Pods como um serviço de rede.
+# Ele fornece um nome DNS estável e um IP para acessar o PostgreSQL dentro do cluster.
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres # Nome do Service. Outras aplicações usarão este nome para se conectar (ex: host: postgres).
+  labels:
+    app: postgres # Rótulo para identificar este Service.
+spec:
+  selector:
+    app: postgres # O Service irá rotear o tráfego para Pods com este rótulo (os Pods do Deployment).
+  ports:
+    - protocol: TCP # Protocolo de rede.
+      port: 5432 # Porta que o Service irá expor dentro do cluster.
+      targetPort: 5432 # Porta do contêiner para a qual o tráfego será roteado.

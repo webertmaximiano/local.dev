@@ -1,0 +1,27 @@
+# Este arquivo define um PersistentVolumeClaim (PVC) para o PostgreSQL.
+# Um PVC é uma requisição de armazenamento feita por um Pod.
+# Ele abstrai os detalhes de como o armazenamento é provisionado.
+# O Kubernetes irá procurar por um PersistentVolume (PV) que satisfaça esta requisição,
+# ou irá provisionar um novo PV dinamicamente se um StorageClass for especificado.
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc # Nome do PVC. Será usado pelo Deployment do PostgreSQL.
+spec:
+  # accessModes define como o volume pode ser montado pelo Pod.
+  # ReadWriteOnce: O volume pode ser montado como leitura/escrita por um único nó.
+  # É o modo mais comum para bancos de dados que rodam em um único Pod.
+  accessModes:
+    - ReadWriteOnce
+
+  # resources.requests define a quantidade de armazenamento que o Pod está solicitando.
+  resources:
+    requests:
+      storage: 5Gi # Solicita 5 Gigabytes de armazenamento para os dados do PostgreSQL.
+
+  # storageClassName especifica qual StorageClass deve ser usado para provisionar o volume.
+  # No Docker Desktop, 'hostpath' é o StorageClass padrão que provisiona volumes
+  # diretamente no sistema de arquivos do host (ou da VM interna do Docker Desktop).
+  # Isso garante que os dados do PostgreSQL sejam persistentes mesmo se o Pod for reiniciado ou movido.
+  storageClassName: hostpath

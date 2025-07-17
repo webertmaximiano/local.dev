@@ -1,0 +1,33 @@
+# monitoring/grafana-values.yaml
+
+admin:
+  existingSecret: grafana-admin-secret
+
+# Configura a fonte de dados Prometheus
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus-server.monitoring-prometheus.svc.cluster.local # URL do serviço Prometheus
+        access: proxy
+        isDefault: true
+
+# Configura o Ingress para o Grafana
+ingress:
+  enabled: true
+  ingressClassName: traefik
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+  hosts:
+    - grafana.local.dev
+  tls:
+    - hosts:
+        - grafana.local.dev
+      secretName: local-dev-tls # Reutiliza o Secret TLS que já criamos
+
+# Configura o Service para o Grafana
+service:
+  type: ClusterIP

@@ -1,0 +1,65 @@
+# traefik-helm-values.yaml
+
+# Configurações gerais do Traefik
+ports:
+  web:
+    port: 8000
+    expose:
+      default: true
+    exposedPort: 80
+    protocol: TCP
+  websecure:
+    port: 8443
+    expose:
+      default: true
+    exposedPort: 443
+    protocol: TCP
+    tls:
+      enabled: true
+
+# Habilita o dashboard e a API
+api:
+  dashboard: true
+  insecure: true # Apenas para desenvolvimento local, não use em produção
+
+# Configura o provedor Kubernetes Ingress
+providers:
+  kubernetesIngress:
+    enabled: true
+    ingressClass: traefik
+    publishedService:
+      enabled: true
+
+# Configura o TLS
+tls:
+  enabled: true
+  options:
+    default:
+      defaultCertificate:
+        secretName: local-dev-tls # Usa o Secret TLS que já criamos
+
+# Configura o IngressClass
+ingressClass:
+  enabled: true
+  isDefaultClass: false
+  name: traefik
+
+# Configura o Service para o Traefik
+service:
+  type: LoadBalancer # Ou NodePort se LoadBalancer não funcionar no Docker Desktop
+  annotations: {}
+  spec:
+    externalTrafficPolicy: Cluster
+
+# IngressRoute para o dashboard
+ingressRoute:
+  dashboard:
+    enabled: true
+    matchRule: Host(`traefik.local.dev`)
+    entryPoints:
+      - websecure # Usar o entrypoint 'websecure' para o dashboard
+
+# Redirecionamento HTTP para HTTPS para o entrypoint web
+additionalArguments:
+  - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+  - "--entrypoints.web.http.redirections.entrypoint.scheme=https"

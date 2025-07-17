@@ -1,0 +1,48 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-world-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-world
+  template:
+    metadata:
+      labels:
+        app: hello-world
+    spec:
+      containers:
+      - name: hello-world
+        image: nginxdemos/hello
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-world-service
+spec:
+  selector:
+    app: hello-world
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: hello-world-ingress
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`agilizando.local.dev`)
+      kind: Rule
+      services:
+        - name: hello-world-service
+          port: 80
+  tls:
+    secretName: local-dev-tls # Nome do Secret TLS que criamos no Passo 1

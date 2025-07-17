@@ -1,0 +1,48 @@
+# monitoring/prometheus-values.yaml
+
+alertmanager:
+  enabled: false
+
+nodeExporter:
+  enabled: false
+
+kubeStateMetrics:
+  enabled: false
+
+prometheus-pushgateway:
+  enabled: false
+
+server:
+  # Habilita a ServiceMonitor para o Traefik
+  serviceMonitor:
+    enabled: true
+    # Configura o ServiceMonitor para encontrar o Traefik
+    matchLabels:
+      app.kubernetes.io/instance: traefik-default
+      app.kubernetes.io/name: traefik
+    # Configura o endpoint para as métricas do Traefik
+    endpoints:
+      - port: metrics # Nome da porta de métricas do Traefik (definida no traefik-helm-values.yaml)
+        interval: 30s
+
+  # Configuração do Prometheus para coletar métricas do Traefik
+  extraScrapeConfigs: |
+    - job_name: 'traefik'
+      metrics_path: /metrics
+      scheme: http
+      kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            names: ['default'] # Namespace onde o Traefik está rodando
+      relabel_configs:
+        - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+          action: keep
+          regex: traefik
+        - source_labels: [__meta_kubernetes_pod_container_port_name]
+          action: keep
+          regex: metrics # Nome da porta de métricas no pod do Traefik
+        - source_labels: [__address__]
+          action: replace
+          regex: ([^:]+):\d+
+          replacement: $1:9100 # Substitui a porta pelo 9100
+          target_label: __address__
