@@ -37,6 +37,7 @@ Este repositório está organizado da seguinte forma:
 
 ### Ambiente Kubernetes
 
+*   `/kubernetes`: Contém guias e utilitários gerais sobre Kubernetes.
 *   `/kubernetes-dashboard`: Arquivos para implantar o Dashboard oficial do Kubernetes.
 *   `/monitoring`: Configurações e tutorial para o stack de monitoramento com Prometheus e Grafana.
 *   `/mysql`: Manifesto para implantar um servidor MySQL no Kubernetes.
@@ -46,6 +47,14 @@ Este repositório está organizado da seguinte forma:
 ### Ambiente Docker Compose/Swarm
 
 *   `/traefik_portainer`: Contém uma configuração completa com `docker-compose.yml` para rodar o Traefik como reverse proxy e o Portainer como interface de gerenciamento do Docker.
+
+## 📚 Guias e Tutoriais
+
+Para uma experiência guiada, siga os tutoriais passo a passo que preparamos:
+
+*   **[Guia de Comandos Essenciais do `kubectl`](./kubernetes/kubectl-cheatsheet.md):** Um guia de referência rápida com os comandos mais importantes para o dia a dia com Kubernetes.
+*   **[Tutorial de Traefik com Kubernetes](./traefik/tutorial-kubernetes-traefik.md):** Comece por aqui para configurar o Ingress Controller, que irá expor seus serviços.
+*   **[Tutorial de Prometheus e Grafana](./monitoring/tutorial-prometheus-grafana.md):** Aprenda a observar a saúde e o desempenho das suas aplicações.
 
 ## 🚀 Como Começar
 
@@ -61,13 +70,7 @@ cd local.dev
 
 **Passo 2: Siga os tutoriais**
 
-Para uma experiência guiada, siga os tutoriais passo a passo que preparamos:
-
-*   **Traefik no Kubernetes:** Comece por aqui para configurar o Ingress Controller, que irá expor seus serviços.
-    *   [Leia o tutorial de Traefik com Kubernetes](./traefik/tutorial-kubernetes-traefik.md)
-
-*   **Monitoramento com Prometheus e Grafana:** Aprenda a observar a saúde e o desempenho das suas aplicações.
-    *   [Leia o tutorial de Prometheus e Grafana](./monitoring/tutorial-prometheus-grafana.md)
+Recomendamos começar pelo **Guia de Comandos Essenciais do `kubectl`** para se familiarizar com a ferramenta e, em seguida, seguir os tutoriais de Traefik e Monitoramento.
 
 Após configurar o Traefik, você poderá implantar as outras aplicações como o `kubernetes-dashboard`, `mysql` ou `pgsql` aplicando os manifestos com `kubectl apply -f <caminho-do-arquivo.yaml>`.
 
