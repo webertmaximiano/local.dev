@@ -34,6 +34,10 @@ Este repositório está organizado da seguinte forma:
 
 *   `Guia_de_Aprendizado_Agilizando_o_Futuro.md`: O documento central que guia toda a sua jornada de aprendizado.
 *   `README.md`: Este arquivo que você está lendo.
+*   `/git-github`: Tutoriais e exemplos para Git e GitHub.
+*   `/vscode`: Tutoriais e configurações para o Visual Studio Code.
+*   `/docker`: Tutoriais de instalação e uso do Docker e Docker Desktop.
+*   `/ci-cd-automation`: Tutoriais e exemplos para CI/CD e GitOps.
 
 ### Ambiente Kubernetes
 
@@ -52,6 +56,10 @@ Este repositório está organizado da seguinte forma:
 
 Para uma experiência guiada, siga os tutoriais passo a passo que preparamos:
 
+*   **[Guia Essencial: Git e GitHub para Iniciantes](./git-github/tutorial-git-github-para-iniciantes.md):** Aprenda os fundamentos do controle de versão e colaboração.
+*   **[Guia Essencial: Visual Studio Code para Iniciantes](./vscode/tutorial-vscode-para-iniciantes.md):** Configure e otimize seu ambiente de desenvolvimento.
+*   **[Guia de Instalação: Docker e Docker Desktop](./docker/tutorial-instalacao-docker.md):** Instale e configure o Docker no seu ambiente.
+*   **[Guia de Automação: CI/CD e GitOps](./ci-cd-automation/tutorial-ci-cd-gitops.md):** Automatize o ciclo de vida do software com GitHub Actions e Argo CD.
 *   **[Guia de Comandos Essenciais do `kubectl`](./kubernetes/kubectl-cheatsheet.md):** Um guia de referência rápida com os comandos mais importantes para o dia a dia com Kubernetes.
 *   **[Tutorial de Traefik com Kubernetes](./traefik/tutorial-kubernetes-traefik.md):** Comece por aqui para configurar o Ingress Controller, que irá expor seus serviços.
 *   **[Tutorial de Prometheus e Grafana](./monitoring/tutorial-prometheus-grafana.md):** Aprenda a observar a saúde e o desempenho das suas aplicações.

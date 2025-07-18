@@ -3,10 +3,10 @@
 alertmanager:
   enabled: false
 
-nodeExporter:
+kubeStateMetrics:
   enabled: false
 
-kubeStateMetrics:
+prometheus-node-exporter:
   enabled: false
 
 prometheus-pushgateway:

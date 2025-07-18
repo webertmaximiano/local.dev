@@ -1,7 +1,7 @@
 estamos configurando um ambiente de desenvolvimento e produnzindo tutorias do passo a passo do caminho feliz, somente do que deu certo para orientar aos alunos.
 
 já temos Ubuntu 24, Docker e Docker Desktop Instalados, habilitamos o Kubernetes via o docker desktop, instalamos o traefik e criamos o tutorial na pasta traefik, expomos a dashboard em traefik.local.dev,
-configuramos prometheus e grafana prometheus.local.dev e grafana.local.dev, mas ambas as aplicações abrem sem um controle de usuario e senha, com exceção do grafana ele solicita usuario e senha, e ja alterei a senha do usuario admin. o proximo passo e cria um tutorial de como fazer o traefik usar uma autenticação pra sua dashboard e depois fazer o mesmo para o prometheus, os novos tutoriais devem ser adicionados nos respectivos diretórios de cada aplicação.
+configuramos prometheus e grafana prometheus.local.dev e grafana.local.dev, agora vamos criar uma dashboard no grafana para monitorar o traefik, e criar um tutorial ensinando a criar dashboard de monitoramento no grafana.
 
 # cluster 
 docker-desktop
