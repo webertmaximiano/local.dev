@@ -47,26 +47,69 @@ Este repositório está organizado da seguinte forma:
 * **`/traefik_portainer`**: Contém uma configuração completa com `docker-compose.yml` para rodar o Traefik como reverse proxy e o Portainer como interface de gerenciamento do Docker.
 
 ---
-
-### 📚 Guias e Tutoriais
+## 📚 Guias e Tutoriais
 
 Para uma experiência guiada, siga os tutoriais passo a passo que preparamos:
-* [Guia Essencial: Git e GitHub para Iniciantes](./git-github/README.md)
-* [Guia Essencial: Visual Studio Code para Iniciantes](./vscode/README.md)
-* [Guia de Instalação: Docker e Docker Desktop](./docker/README.md)
-* [Guia de Automação: CI/CD e GitOps](./ci-cd-automation/README.md)
-* [Guia de Comandos Essenciais do kubectl](./kubernetes/kubectl-essentials.md)
-* [Tutorial de Traefik com Kubernetes](./traefik/README.md)
-* [Tutorial de Prometheus e Grafana](./monitoring/README.md)
 
----
+*   **[Guia Essencial: Git e GitHub para Iniciantes](./git-github/tutorial-git-github-para-iniciantes.md):** Aprenda os fundamentos do controle de versão e colaboração.
+*   **[Guia Essencial: Visual Studio Code para Iniciantes](./vscode/tutorial-vscode-para-iniciantes.md):** Configure e otimize seu ambiente de desenvolvimento.
+*   **[Guia de Instalação: Docker e Docker Desktop](./docker/tutorial-instalacao-docker.md):** Instale e configure o Docker no seu ambiente.
+*   **[Guia de Automação: CI/CD e GitOps](./ci-cd-automation/tutorial-ci-cd-gitops.md):** Automatize o ciclo de vida do software com GitHub Actions e Argo CD.
+*   **[Guia de Comandos Essenciais do `kubectl`](./kubernetes/kubectl-cheatsheet.md):** Um guia de referência rápida com os comandos mais importantes para o dia a dia com Kubernetes.
+*   **[Tutorial de Traefik com Kubernetes](./traefik/tutorial-kubernetes-traefik.md):** Comece por aqui para configurar o Ingress Controller, que irá expor seus serviços.
+*   **[Tutorial de Prometheus e Grafana](./monitoring/tutorial-prometheus-grafana.md):** Aprenda a observar a saúde e o desempenho das suas aplicações.
 
-### 🚀 Como Começar
+## 🚀 Como Começar
 
-#### **Opção 1: Ambiente Kubernetes (Recomendado)**
+### 1. Ambiente Kubernetes (Recomendado)
+
 Este ambiente é o foco principal do nosso guia de aprendizado.
 
 **Passo 1: Clone o repositório**
 ```bash
-git clone [https://github.com/webertmaximiano/local.dev.git](https://github.com/webertmaximiano/local.dev.git)
+git clone https://github.com/webertmaximiano/local.dev.git
 cd local.dev
+```
+
+**Passo 2: Siga os tutoriais**
+
+Recomendamos começar pelo **Guia de Comandos Essenciais do `kubectl`** para se familiarizar com a ferramenta e, em seguida, seguir os tutoriais de Traefik e Monitoramento.
+
+Após configurar o Traefik, você poderá implantar as outras aplicações como o `kubernetes-dashboard`, `mysql` ou `pgsql` aplicando os manifestos com `kubectl apply -f <caminho-do-arquivo.yaml>`.
+
+### 2. Ambiente Docker Compose/Swarm
+
+Esta é uma ótima opção para quem quer um ambiente robusto sem a complexidade inicial do Kubernetes.
+
+**Passo 1: Clone o repositório**
+```bash
+git clone https://github.com/webertmaximiano/local.dev.git
+cd local.dev/traefik_portainer
+```
+
+**Passo 2: Crie a rede Docker externa**
+O Traefik precisa de uma rede para se comunicar com os outros contêineres que ele irá gerenciar.
+```bash
+docker network create traefik-proxy
+```
+
+**Passo 3: Inicie os serviços**
+Este comando irá baixar as imagens e iniciar os contêineres do Traefik e do Portainer em background.
+```bash
+docker-compose -f compose-local-dev.yml up -d
+```
+
+Após a execução, você poderá acessar:
+*   **Dashboard do Traefik:** [http://traefik.localhost](http://traefik.localhost)
+*   **Dashboard do Portainer:** [http://portainer.localhost](http://portainer.localhost)
+
+Para mais detalhes sobre como adicionar seus próprios projetos a este ambiente, consulte o `README.md` dentro da pasta `/traefik_portainer`.
+
+## 🌟 Próximos Passos
+
+Este repositório é um projeto vivo e continuará a ser atualizado com:
+*   Novos tutoriais, cobrindo as fases de CI/CD com ArgoCD e GitHub Actions.
+*   Mais exemplos de aplicações para você implantar.
+*   Melhorias na documentação e nos scripts de automação.
+
+Sinta-se à vontade para contribuir, abrir issues e fazer parte da comunidade **Agilizando o Futuro**!
