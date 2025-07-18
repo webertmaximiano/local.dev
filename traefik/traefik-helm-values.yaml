@@ -65,6 +65,9 @@ ingressRoute:
     matchRule: Host(`traefik.local.dev`)
     entryPoints:
       - websecure # Usar o entrypoint 'websecure' para o dashboard
+    middlewares:
+      - name: traefik-dashboard-auth
+        namespace: default
 
 # Redirecionamento HTTP para HTTPS para o entrypoint web
 additionalArguments:
