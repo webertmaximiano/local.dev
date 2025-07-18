@@ -5,18 +5,12 @@ Este tutorial detalha a instalação e configuração do Prometheus e Grafana no
 ## Pré-requisitos
 
 *   **Ambiente Kubernetes:** Docker Desktop com Kubernetes habilitado e em execução.
-*   **Traefik:** Traefik instalado e funcionando como Ingress Controller, expondo métricas na porta 9100 (padrão do Helm chart).
+*   **Traefik:** Traefik instalado e funcionando como Ingress Controller, com o middleware de autenticação básica (`traefik-dashboard-auth`) já configurado (conforme o tutorial do Traefik).
 *   **Helm 3:** Gerenciador de pacotes para Kubernetes.
 *   **`kubectl`:** Ferramenta de linha de comando para interagir com o cluster Kubernetes.
-*   **Entradas no `/etc/hosts`:** Certifique-se de que seu `/etc/hosts` contenha entradas para os domínios que você usará, apontando para `127.0.0.1`. Exemplo:
-    ```
-    127.0.0.1 prometheus.local.dev
-    127.0.0.1 grafana.local.dev
-    ```
+*   **Entradas no `/etc/hosts`:** Certifique-se de que seu `/etc/hosts` contenha entradas para os domínios que você usará, apontando para `127.0.0.1`.
 
 ## 1. Limpeza de Instalações Anteriores (Opcional, mas Recomendado)
-
-Se você tentou instalar o Prometheus ou Grafana anteriormente, é crucial remover todas as instalações e recursos para evitar conflitos.
 
 ```bash
 helm uninstall prometheus --namespace monitoring-prometheus --ignore-not-found
@@ -27,8 +21,6 @@ kubectl delete namespace monitoring-grafana --ignore-not-found
 
 ## 2. Criação de Namespaces
 
-Vamos criar namespaces dedicados para o Prometheus e Grafana para melhor organização.
-
 ```bash
 kubectl create namespace monitoring-prometheus
 kubectl create namespace monitoring-grafana
@@ -36,7 +28,7 @@ kubectl create namespace monitoring-grafana
 
 ## 3. Instalação do Prometheus
 
-Vamos instalar o Prometheus, configurando-o para coletar apenas as métricas do Traefik.
+Vamos instalar o Prometheus, configurando-o para coletar métricas do Traefik e protegendo seu dashboard.
 
 ### 3.1. Adicionar Repositório Helm do Prometheus
 
@@ -47,7 +39,7 @@ helm repo update
 
 ### 3.2. Criar o Arquivo `monitoring/prometheus-values.yaml`
 
-Crie o arquivo `/home/webert/local.dev/monitoring/prometheus-values.yaml` com o seguinte conteúdo:
+Crie o arquivo `/home/webert/local.dev/monitoring/prometheus-values.yaml` com o seguinte conteúdo. Note a seção `ingress` que habilita o acesso externo e aplica o middleware de autenticação.
 
 ```yaml
 # monitoring/prometheus-values.yaml
@@ -65,6 +57,22 @@ prometheus-pushgateway:
   enabled: false
 
 server:
+  # Configuração do Ingress para o Prometheus
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    hosts:
+      - prometheus.local.dev
+    tls:
+      - secretName: local-dev-tls # Reutiliza o Secret TLS que já criamos
+        hosts:
+          - prometheus.local.dev
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+      traefik.ingress.kubernetes.io/router.tls: "true"
+      # Aplica o middleware de autenticação básica criado no tutorial do Traefik
+      traefik.ingress.kubernetes.io/router.middlewares: default-traefik-dashboard-auth@kubernetescrd
+
   # Configuração do Prometheus para coletar métricas do Traefik
   extraScrapeConfigs: |
     - job_name: 'traefik'
@@ -91,7 +99,7 @@ server:
 ### 3.3. Instalar o Prometheus
 
 ```bash
-helm install prometheus prometheus-community/prometheus -f /home/webert/local.dev/monitoring/prometheus-values.yaml --namespace monitoring-prometheus --wait
+helm install prometheus prometheus-community/prometheus -f /home/webert/local.dev/monitoring/prometheus-values.yaml --namespace monitoring-prometheus --create-namespace --wait
 ```
 
 ## 4. Instalação do Grafana
@@ -165,20 +173,36 @@ kubectl get pods -n monitoring-prometheus -l app=prometheus-server
 kubectl get pods -n monitoring-grafana -l app.kubernetes.io/name=grafana
 ```
 
-### 5.2. Acessar o Dashboard do Grafana
+### 5.2. Testar Acesso ao Dashboard do Prometheus (Com e Sem Credenciais)
+
+**Sem Credenciais (Deve Falhar):**
+```bash
+curl -vk https://prometheus.local.dev
+# Expectativa: HTTP/2 401 Unauthorized
+```
+
+**Com Credenciais (Deve Ter Sucesso):**
+```bash
+curl -vk --user admin:admin https://prometheus.local.dev
+# Expectativa: HTTP/2 200 OK
+```
+
+Ao acessar `https://prometheus.local.dev` no navegador, uma janela de login deve aparecer.
+
+### 5.3. Acessar o Dashboard do Grafana
 
 Abra seu navegador e acesse: `https://grafana.local.dev`
 
 Faça login com o usuário `admin` e a senha que você definiu no Secret (`admin` por padrão).
 
-### 5.3. Verificar Fonte de Dados e Métricas do Traefik no Grafana
+### 5.4. Verificar Fonte de Dados e Métricas do Traefik no Grafana
 
 Após logar no Grafana:
 
 1.  Navegue até "Configuration" (ícone de engrenagem) -> "Data sources". Confirme que o Prometheus está configurado.
 2.  Vá para "Explore" (ícone de bússola) e selecione a fonte de dados Prometheus. Digite `traefik_` e veja se as métricas do Traefik aparecem no autocompletar.
 
-### 5.4. Importar Dashboard de Exemplo do Traefik no Grafana
+### 5.5. Importar Dashboard de Exemplo do Traefik no Grafana
 
 Você pode importar um dashboard oficial do Traefik para o Grafana. Um bom ponto de partida é o dashboard "Traefik Dashboard" (ID: 13960) ou "Traefik 2.x" (ID: 12750).
 

@@ -13,6 +13,21 @@ prometheus-pushgateway:
   enabled: false
 
 server:
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    hosts:
+      - prometheus.local.dev
+    tls:
+      - secretName: local-dev-tls
+        hosts:
+          - prometheus.local.dev
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+      traefik.ingress.kubernetes.io/router.tls: "true"
+      traefik.ingress.kubernetes.io/router.middlewares: default-traefik-dashboard-auth@kubernetescrd
+
+  # Habilita a ServiceMonitor para o Traefik
   # Habilita a ServiceMonitor para o Traefik
   serviceMonitor:
     enabled: true
