@@ -5,8 +5,8 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: local-storage
+  storageClassName: hostpath
   resources:
     requests:
-      storage: 20Gi # Deve ser igual ou menor que a capacidade do PV
-  volumeName: mysql-pv-data
+      storage: 5Gi # Deve ser igual ou menor que a capacidade do PV
+  
