@@ -57,6 +57,7 @@ Para uma experiência guiada, siga os tutoriais passo a passo que preparamos:
 *   **[Guia de Automação: CI/CD e GitOps](./ci-cd-automation/tutorial-ci-cd-gitops.md):** Automatize o ciclo de vida do software com GitHub Actions e Argo CD.
 *   **[Guia de Comandos Essenciais do `kubectl`](./kubernetes/kubectl-cheatsheet.md):** Um guia de referência rápida com os comandos mais importantes para o dia a dia com Kubernetes.
 *   **[Tutorial de Traefik com Kubernetes](./traefik/tutorial-kubernetes-traefik.md):** Comece por aqui para configurar o Ingress Controller, que irá expor seus serviços.
+*   **[Guia: Adicionando Novos Domínios Virtuais ao Traefik no Kubernetes](./traefik/tutorial-virtual-domains.md):** Aprenda a configurar domínios personalizados para suas aplicações.
 *   **[Tutorial de Prometheus e Grafana](./monitoring/tutorial-prometheus-grafana.md):** Aprenda a observar a saúde e o desempenho das suas aplicações.
 
 ## 🚀 Como Começar

@@ -369,9 +369,17 @@ server:
   fullnameOverride: ""
 
   ingress:
-    ## If true, Prometheus server Ingress will be created
-    ##
-    enabled: false
+    enabled: true
+    ingressClassName: traefik
+    hosts:
+      - host: prometheus.local.dev
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: local-dev-tls
+        hosts:
+          - prometheus.local.dev
 
     ingressClassName: ""
 
