@@ -1,75 +1,60 @@
-
 # traefik-helm-values.yaml
 
-# Configurações gerais do Traefik
 ports:
-  traefik:
-    port: 8080
-    expose:
-      default: false
-    exposedPort: 8080
-    protocol: TCP
   web:
-    port: 8000
-    expose:
-      default: true
+    port: 80
     exposedPort: 80
-    protocol: TCP
   websecure:
-    port: 8443
-    expose:
-      default: true
+    port: 443
     exposedPort: 443
-    protocol: TCP
     tls:
       enabled: true
+  metrics:
+    port: 9100
+    exposedPort: 9100
+  traefik:
+    port: 8080
+    exposedPort: 8080
 
-# Habilita o dashboard e a API
 api:
   dashboard: true
-  insecure: true # Apenas para desenvolvimento local, não use em produção
 
-# Configura o provedor Kubernetes Ingress
 providers:
   kubernetesIngress:
     enabled: true
-    ingressClass: traefik
-    publishedService:
-      enabled: true
 
-# Configura o TLS
-tls:
-  enabled: true
-  options:
-    default:
-      defaultCertificate:
-        secretName: local-dev-tls # Usa o Secret TLS que já criamos
-
-# Configura o IngressClass
 ingressClass:
   enabled: true
-  isDefaultClass: false
-  name: traefik
+  isDefaultClass: true
 
-# Configura o Service para o Traefik
 service:
-  type: LoadBalancer # Ou NodePort se LoadBalancer não funcionar no Docker Desktop
-  annotations: {}
-  spec:
-    externalTrafficPolicy: Cluster
+  type: LoadBalancer
 
-# IngressRoute para o dashboard
-ingressRoute:
-  dashboard:
-    enabled: true # Habilitado
-    matchRule: Host(`traefik.local.dev`)
-    entryPoints:
-      - websecure # Usar o entrypoint 'websecure' para o dashboard
-    middlewares:
-      - name: traefik-dashboard-auth
-        namespace: default
-
-# Redirecionamento HTTP para HTTPS para o entrypoint web
 additionalArguments:
   - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
   - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+  - "--providers.docker.exposedbydefault=false"
+  - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+
+# Monta o socket do Docker no pod do Traefik usando extraVolumes/extraVolumeMounts
+controller:
+  extraVolumes:
+    - name: docker-socket
+      hostPath:
+        path: /var/run/docker.sock
+  extraVolumeMounts:
+    - name: docker-socket
+      mountPath: /var/run/docker.sock
+      readOnly: true
+
+ingressRoute:
+  dashboard:
+    enabled: true
+    matchRule: Host(`traefik.local.dev`)
+    entryPoints:
+      - websecure
+    middlewares:
+      - name: traefik-dashboard-auth
+        namespace: default # Namespace onde o middleware foi criado
+    tls:
+      secretName: local-dev-tls

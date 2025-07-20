@@ -41,10 +41,10 @@ Este repositório está organizado da seguinte forma:
 * **`/monitoring`**: Configurações e tutorial para o stack de monitoramento com Prometheus e Grafana.
 * **`/mysql`**: Manifesto para implantar um servidor MySQL no Kubernetes.
 * **`/pgsql`**: Manifesto para implantar um servidor PostgreSQL no Kubernetes.
-* **`/traefik`**: Arquivos de configuração e tutorial para usar o Traefik como Ingress Controller no Kubernetes.
+* **`/traefik`**: Arquivos de configuração e tutorial para usar o Traefik como Ingress Controller no Kubernetes **e como reverse proxy para contêineres Docker**.
 
-**Ambiente Docker Compose/Swarm**
-* **`/traefik_portainer`**: Contém uma configuração completa com `docker-compose.yml` para rodar o Traefik como reverse proxy e o Portainer como interface de gerenciamento do Docker.
+**Ambiente Docker Compose/Swarm (Alternativo)**
+* **`/traefik_portainer`**: Contém uma configuração completa com `docker-compose.yml` para rodar o Traefik como reverse proxy e o Portainer como interface de gerenciamento do Docker. **Esta opção é ideal para quem busca um ambiente robusto sem a complexidade inicial do Kubernetes, ou como uma alternativa ao Traefik do Kubernetes para gerenciar apenas contêineres Docker.**
 
 ---
 ## 📚 Guias e Tutoriais
@@ -78,7 +78,7 @@ Recomendamos começar pelo **Guia de Comandos Essenciais do `kubectl`** para se 
 
 Após configurar o Traefik, você poderá implantar as outras aplicações como o `kubernetes-dashboard`, `mysql` ou `pgsql` aplicando os manifestos com `kubectl apply -f <caminho-do-arquivo.yaml>`.
 
-### 2. Ambiente Docker Compose/Swarm
+### 2. Ambiente Docker Compose/Swarm (Alternativo)
 
 Esta é uma ótima opção para quem quer um ambiente robusto sem a complexidade inicial do Kubernetes.
 

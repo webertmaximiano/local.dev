@@ -2,6 +2,8 @@
 
 Este tutorial detalha o processo de configuração do Traefik como Ingress Controller no Kubernetes (via Docker Desktop), habilitando HTTPS com certificados autoassinados e domínios virtuais para ambiente de desenvolvimento local.
 
+**Novidade:** Agora, o Traefik também será configurado para atuar como um *reverse proxy* para contêineres Docker, permitindo que ele gerencie aplicações tanto do Kubernetes quanto do Docker Compose, tudo a partir de uma única instância do Traefik!
+
 ## Pré-requisitos
 
 *   **Ubuntu 24.04 LTS:** Sistema operacional.
@@ -38,20 +40,26 @@ helm repo update
 
 ### 3.2. Criar o Arquivo `traefik-helm-values.yaml`
 
-Crie o arquivo `/home/webert/local.dev/traefik/traefik-helm-values.yaml` com o conteúdo inicial.
+Crie o arquivo `/home/webert/local.dev/traefik/traefik-helm-values.yaml` com o conteúdo abaixo. Este arquivo configura o Traefik para operar com Kubernetes e Docker, padronizando as portas e habilitando o acesso ao socket do Docker.
 
 ```yaml
 # traefik-helm-values.yaml
 
 ports:
   web:
-    port: 8000
+    port: 80
     exposedPort: 80
   websecure:
-    port: 8443
+    port: 443
     exposedPort: 443
     tls:
       enabled: true
+  metrics:
+    port: 9100
+    exposedPort: 9100
+  traefik:
+    port: 8080
+    exposedPort: 8080
 
 api:
   dashboard: true
@@ -70,6 +78,31 @@ service:
 additionalArguments:
   - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
   - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+  - "--providers.docker.exposedbydefault=false"
+  - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+
+# Monta o socket do Docker no pod do Traefik usando extraVolumes/extraVolumeMounts
+controller:
+  extraVolumes:
+    - name: docker-socket
+      hostPath:
+        path: /var/run/docker.sock
+  extraVolumeMounts:
+    - name: docker-socket
+      mountPath: /var/run/docker.sock
+      readOnly: true
+
+ingressRoute:
+  dashboard:
+    enabled: true
+    matchRule: Host(`traefik.local.dev`)
+    entryPoints:
+      - websecure
+    middlewares:
+      - name: traefik-dashboard-auth
+        namespace: default # Namespace onde o middleware foi criado
+    tls:
+      secretName: local-dev-tls
 ```
 
 ### 3.3. Instalar o Traefik
@@ -124,28 +157,11 @@ kubectl apply -f /home/webert/local.dev/traefik/traefik-dashboard-auth-middlewar
 
 ### 4.4. Atualizar o `traefik-helm-values.yaml`
 
-Agora, vamos editar nosso `traefik-helm-values.yaml` para criar o `IngressRoute` para o dashboard e aplicar o middleware a ele.
-
-```yaml
-# ... (conteúdo anterior do values.yaml)
-
-# Adicione ou modifique esta seção no final do arquivo
-ingressRoute:
-  dashboard:
-    enabled: true
-    matchRule: Host(`traefik.local.dev`)
-    entryPoints:
-      - websecure
-    middlewares:
-      - name: traefik-dashboard-auth
-        namespace: default # Namespace onde o middleware foi criado
-    tls:
-      secretName: local-dev-tls
-```
+Esta seção não é mais necessária, pois o `traefik-helm-values.yaml` já contém a configuração completa do `IngressRoute` para o dashboard. O `helm install` já aplica tudo de uma vez.
 
 ### 4.5. Aplicar as Alterações
 
-Execute um `helm upgrade` para que o Traefik recarregue a configuração com as novas definições de segurança.
+Se você precisar atualizar a instalação do Traefik após a primeira vez (por exemplo, para mudar alguma configuração no `traefik-helm-values.yaml`), use o comando `helm upgrade`:
 
 ```bash
 helm upgrade traefik traefik/traefik -f /home/webert/local.dev/traefik/traefik-helm-values.yaml --wait
@@ -173,8 +189,14 @@ curl -vk --user admin:admin https://traefik.local.dev/dashboard/
 
 Ao acessar `https://traefik.local.dev/dashboard/` no navegador, uma janela de login deve aparecer.
 
+### 5.3. Verificação do Provedor Docker
+
+Para confirmar que o Traefik está enxergando os contêineres Docker, você pode:
+
+1.  Acessar o Dashboard do Traefik (`https://traefik.local.dev/dashboard/`).
+2.  Navegar até a seção **Providers**.
+3.  Você deverá ver o provedor **Docker** listado, e ele começará a mostrar os serviços Docker que você iniciar com os labels corretos.
+
 ## 6. Implantação de uma Aplicação de Exemplo
 
 (Esta seção permanece a mesma)
-
-...
