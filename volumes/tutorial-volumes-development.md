@@ -1,63 +1,67 @@
-# Guia Definitivo: Desenvolvimento Kubernetes Local no Ubuntu 24.04 com Skaffold e Hot Reload
+# 🚀 Guia Definitivo: Desenvolvimento Kubernetes Local no Ubuntu 24.04 com Skaffold e Hot Reload
 
-Este guia documenta a solução completa para desenvolver aplicações em um cluster Kubernetes local (via Docker Desktop) no Ubuntu 24.04, resolvendo os problemas de sincronização de arquivos e permissões, e estabelecendo um fluxo de trabalho profissional com "hot reload" instantâneo.
+Este guia apresenta uma solução completa para desenvolver aplicações em um cluster Kubernetes local (via Docker Desktop) no Ubuntu 24.04. O objetivo é resolver problemas comuns de sincronização de arquivos e permissões, estabelecendo um fluxo de trabalho profissional com **hot reload** instantâneo.
 
 Nosso projeto de exemplo é um aplicativo **React + Vite** chamado `hello-world-app`, localizado no diretório `/local.dev/hello-world-app`.
 
-## O Desafio Inicial
+## 🎯 O Desafio
 
-Ao usar o Docker Desktop no Ubuntu 24.04, desenvolvedores enfrentam dois grandes obstáculos que quebram o fluxo de "live reload":
+Ao usar o Docker Desktop no Ubuntu 24.04, desenvolvedores enfrentam dois grandes obstáculos que impedem o "live reload":
 
-1.  **Restrição do AppArmor:** Uma nova configuração de segurança do Ubuntu impede que o Docker Desktop funcione corretamente, causando instabilidade.
-2.  **Falha na Sincronização de Volumes (`hostPath`):** A camada de virtualização do Docker Desktop apresenta bugs ao compartilhar arquivos do sistema host com os contêineres do Kubernetes. Montar volumes diretamente (`hostPath`) se mostra não confiável, fazendo com que os pods não encontrem os arquivos da aplicação e entrem em `CrashLoopBackOff`.
+1.  **Restrição do AppArmor:** Uma nova configuração de segurança do Ubuntu causa instabilidade no Docker Desktop.
+2.  **Falha na Sincronização de Volumes (`hostPath`):** A camada de virtualização do Docker Desktop apresenta bugs ao compartilhar arquivos do host com os contêineres. Montar volumes diretamente (`hostPath`) não é confiável, fazendo com que os pods entrem em `CrashLoopBackOff` por não encontrarem os arquivos da aplicação.
 
-## A Solução Evolutiva: De Volumes a Skaffold
+## ✨ A Solução: Orquestração com Skaffold
 
-A solução não é tentar forçar os volumes a funcionar, mas sim adotar uma ferramenta de orquestração de desenvolvimento que contorne o problema de forma mais inteligente: o **Skaffold**.
+Em vez de forçar o uso de volumes, a solução mais inteligente é adotar o **Skaffold**, uma ferramenta de orquestração de desenvolvimento que contorna o problema.
 
-Este guia é dividido em três etapas:
+O guia está dividido em três etapas:
 
 1.  **Configuração do Ambiente:** Corrigir a pré-condição do sistema operacional.
-2.  **Containerização Correta:** Criar um `Dockerfile` robusto e à prova de erros de permissão.
-3.  **Orquestração Ágil com Skaffold:** Usar o Skaffold para automatizar o ciclo de build, deploy e, o mais importante, a sincronização de arquivos para um "hot reload" instantâneo.
+2.  **Containerização Robusta:** Criar um `Dockerfile` otimizado e à prova de erros de permissão.
+3.  **Orquestração Ágil com Skaffold:** Automatizar o ciclo de build, deploy e sincronização de arquivos para um "hot reload" instantâneo.
 
 ---
 
 ### Etapa 1: Corrigir a Restrição do AppArmor no Ubuntu 24.04
 
-Esta etapa é obrigatória para a estabilidade do Docker Desktop.
+Este passo é **obrigatório** para garantir a estabilidade do Docker Desktop.
 
-1.  **Abra o Terminal** e edite `sysctl.conf`:
+1.  **Abra o terminal** e edite o arquivo `/etc/sysctl.conf`:
     ```bash
     sudo nano /etc/sysctl.conf
     ```
+
 2.  Adicione a seguinte linha ao final do arquivo:
     ```
     kernel.apparmor_restrict_unprivileged_userns=0
     ```
-3.  Salve, feche e aplique a alteração:
+
+3.  Salve, feche o editor e aplique a alteração:
     ```bash
     sudo sysctl -p
     ```
+
 4.  Reinicie o Docker Desktop para que a mudança tenha efeito:
     ```bash
     systemctl --user restart docker-desktop
     ```
+
 Com o ambiente estável, podemos focar na aplicação.
 
 ---
 
 ### Etapa 2: Preparando a Aplicação e o `Dockerfile`
 
-Vamos configurar os arquivos necessários dentro da nossa pasta de projeto `/local.dev/hello-world-app`.
+Vamos configurar os arquivos necessários dentro do diretório do projeto: `/local.dev/hello-world-app`.
 
 #### Arquivo 1: `Dockerfile.dev`
 
-Este `Dockerfile` é a receita para criar nossa imagem de desenvolvimento. Ele resolve os problemas de versão do Node.js para o Vite e os problemas de permissão.
+Este `Dockerfile` é a receita para criar nossa imagem de desenvolvimento. Ele resolve problemas de versão do Node.js para o Vite e questões de permissão.
 
 ```dockerfile
 # Dockerfile.dev
-# Usa a versão 20 do Node.js, que é compatível com o Vite moderno.
+# Usa a versão 24 do Node.js, compatível com o Vite moderno.
 FROM node:24-alpine
 
 # Argumentos para UID/GID para corresponder ao nosso usuário host.
@@ -78,7 +82,7 @@ RUN chown -R node:node /home/node/app
 # Muda para o usuário 'node' para todas as operações subsequentes.
 USER node
 
-# Copia os arquivos de dependência e instala, o que otimiza o cache do Docker.
+# Copia os arquivos de dependência e instala, otimizando o cache do Docker.
 COPY --chown=node:node package*.json ./
 RUN npm install
 
@@ -88,15 +92,16 @@ COPY --chown=node:node . .
 # Expõe a porta padrão do Vite.
 EXPOSE 5173
 
-# Rodar o servidor de desenvolvimento com a flag '--host' para torná-lo acessível.
+# Roda o servidor de desenvolvimento com a flag '--host' para torná-lo acessível.
 CMD ["npm", "run", "dev", "--", "--host"]
-
 ```
+
 #### Arquivo 2: `vite.config.js`
-Configuramos o Vite para aceitar requisições do nosso Ingress (agilizando.local.dev) e para funcionar bem com o Hot Module Replacement (HMR) dentro do Docker.
 
-```vite.config.js
+Configuramos o Vite para aceitar requisições do nosso Ingress (`agilizando.local.dev`) e para funcionar corretamente com o Hot Module Replacement (HMR) dentro do Docker.
 
+```javascript
+// vite.config.js
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -114,16 +119,33 @@ export default defineConfig({
     allowedHosts: ['agilizando.local.dev']
   }
 })
-
 ```
-#### Etapa 3: Orquestração com Kubernetes e Skaffold
-Com a aplicação pronta, vamos descrever como executá-la no Kubernetes e como o Skaffold vai gerenciar tudo.
 
-Arquivo 3: k8s-manifest.yaml
-Este é o nosso manifesto Kubernetes. Ele descreve o Deployment para rodar a aplicação, o Service para expô-la internamente e o Ingress para acessá-la pelo navegador. Note que não usamos mais hostPath, pois o Skaffold cuidará da sincronização.
+---
 
-YAML
+### Etapa 3: Orquestração com Kubernetes e Skaffold
 
+Com a aplicação pronta, vamos instalar e configurar o Skaffold para gerenciar nosso ambiente.
+
+#### 3.1: Instalar o Skaffold
+
+No seu terminal, execute o seguinte comando para baixar e instalar o Skaffold:
+
+```bash
+curl -Lo skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64 && \
+sudo install skaffold /usr/local/bin/
+```
+Isso fará o download do executável e o moverá para uma pasta do sistema, tornando o comando `skaffold` globalmente acessível.
+
+#### 3.2: Configurar os Manifestos
+
+Agora, crie os dois arquivos de configuração a seguir na raiz do seu projeto.
+
+##### Arquivo 3: `k8s-manifest.yaml`
+
+Este é o nosso manifesto Kubernetes. Ele descreve o `Deployment`, o `Service` e o `Ingress` da aplicação.
+
+```yaml
 # k8s-manifest.yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -174,11 +196,13 @@ spec:
             name: hello-world-service
             port:
               number: 80
-Arquivo 4: skaffold.yaml
-Este é o cérebro da nossa operação. Ele diz ao Skaffold como construir, implantar e, crucialmente, sincronizar nossos arquivos para um "hot reload" rápido.
+```
 
-YAML
+##### Arquivo 4: `skaffold.yaml`
 
+Este é o cérebro da nossa operação. Ele diz ao Skaffold como construir, implantar e, crucialmente, sincronizar nossos arquivos para um **hot reload** rápido.
+
+```yaml
 # skaffold.yaml
 apiVersion: skaffold/v4beta1
 kind: Config
@@ -207,16 +231,22 @@ portForward:
     resourceName: hello-world-service
     port: 80
     localPort: 4503
-Executando o Ambiente de Desenvolvimento
-Com todos os quatro arquivos configurados na pasta /local.dev/hello-world-app, o fluxo de trabalho se resume a um único comando no terminal:
+```
 
-Bash
+---
 
+### 🚀 Executando o Ambiente de Desenvolvimento
+
+Com todos os quatro arquivos configurados na pasta `/local.dev/hello-world-app`, o fluxo de trabalho se resume a um único comando no terminal:
+
+```bash
 skaffold dev --port-forward --trigger=polling
-skaffold dev: Inicia o modo de desenvolvimento.
+```
 
---port-forward: Expõe a aplicação na porta 4503 do seu localhost.
+-   `skaffold dev`: Inicia o modo de desenvolvimento.
+-   `--port-forward`: Expõe a aplicação na porta `4503` do seu `localhost`.
+-   `--trigger=polling`: A flag **essencial** que força o Skaffold a detectar mudanças de arquivo no seu ambiente Ubuntu.
 
---trigger=polling: A flag essencial que força o Skaffold a detectar mudanças de arquivo no seu ambiente Ubuntu.
+Agora, ao editar e salvar qualquer arquivo (`.js`, `.css`, etc.) na sua pasta `src`, o Skaffold irá copiar instantaneamente o arquivo alterado para dentro do contêiner em execução, e o Vite atualizará o navegador automaticamente.
 
-Agora, quando você edita e salva qualquer arquivo javascript, css, etc., na sua pasta src, o Skaffold irá instantaneamente copiar o arquivo alterado para dentro do contêiner em execução, e o Vite irá atualizar o navegador automaticamente. Você tem a robustez de um deploy Kubernetes com a velocidade de um desenvolvimento local tradicion
+Você terá a robustez de um deploy Kubernetes com a velocidade de um desenvolvimento local tradicional!
