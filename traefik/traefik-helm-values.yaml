@@ -33,7 +33,7 @@ service:
 additionalArguments:
   - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
   - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-  - "--providers.docker.exposedbydefault=false"
+  - "--providers.docker.exposedbydefault=true"
   - "--providers.docker.endpoint=unix:///var/run/docker.sock"
 
 # Monta o socket do Docker no pod do Traefik usando extraVolumes/extraVolumeMounts

@@ -1,0 +1,1 @@
+Leia o README.md e guia de aprendizado para conhecer o repositório, recupere o contexto lendo o context.md e me ajude
