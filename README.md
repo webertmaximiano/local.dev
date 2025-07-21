@@ -54,6 +54,7 @@ Para uma experiência guiada, siga os tutoriais passo a passo que preparamos:
 *   **[Guia Essencial: Git e GitHub para Iniciantes](./git-github/tutorial-git-github-para-iniciantes.md):** Aprenda os fundamentos do controle de versão e colaboração.
 *   **[Guia Essencial: Visual Studio Code para Iniciantes](./vscode/tutorial-vscode-para-iniciantes.md):** Configure e otimize seu ambiente de desenvolvimento.
 *   **[Guia de Instalação: Docker e Docker Desktop](./docker/tutorial-instalacao-docker.md):** Instale e configure o Docker no seu ambiente.
+*   **[Guia de Solução: Sincronizando Volumes no Docker/Kubernetes](./volumes/tutorial-volumes-development.md):** Resolva problemas de sincronização de arquivos entre seu PC e os contêineres.
 *   **[Guia de Automação: CI/CD e GitOps](./ci-cd-automation/tutorial-ci-cd-gitops.md):** Automatize o ciclo de vida do software com GitHub Actions e Argo CD.
 *   **[Guia de Comandos Essenciais do `kubectl`](./kubernetes/kubectl-cheatsheet.md):** Um guia de referência rápida com os comandos mais importantes para o dia a dia com Kubernetes.
 *   **[Tutorial de Traefik com Kubernetes](./traefik/tutorial-kubernetes-traefik.md):** Comece por aqui para configurar o Ingress Controller, que irá expor seus serviços.

@@ -27,7 +27,7 @@ server:
       traefik.ingress.kubernetes.io/router.tls: "true"
       traefik.ingress.kubernetes.io/router.middlewares: default-traefik-dashboard-auth@kubernetescrd
 
-  # Habilita a ServiceMonitor para o Traefik
+
   # Habilita a ServiceMonitor para o Traefik
   serviceMonitor:
     enabled: true

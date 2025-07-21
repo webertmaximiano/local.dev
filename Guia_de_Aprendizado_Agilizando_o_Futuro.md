@@ -45,6 +45,8 @@ Agora, vamos "empacotar" sua aplicação para que ela rode de forma idêntica em
         3.  Use `docker run` para iniciar sua aplicação a partir da imagem.
         4.  Crie um arquivo `docker-compose.yml` para rodar múltiplos serviços juntos, como sua API e um banco de dados (Postgres ou MongoDB, por exemplo).
 
+        > **Dica de Solução de Problemas:** Se você notar que as alterações no seu código local não estão aparecendo dentro do contêiner (problema de live reload), nós temos um guia específico para resolver isso no Ubuntu. Consulte o **[Guia de Solução: Sincronizando Volumes no Docker/Kubernetes](./volumes/tutorial-volumes-development.md)**.
+
 ### Fase 2: Orquestração Local com Kubernetes
 
 Sua aplicação agora roda em contêineres. O próximo passo é aprender a gerenciar e escalar esses contêineres como os profissionais.

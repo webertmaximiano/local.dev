@@ -1,0 +1,30 @@
+# Arquivo: skaffold.yaml (Versão final com 'sync')
+apiVersion: skaffold/v4beta1
+kind: Config
+metadata:
+  name: hello-world-app
+build:
+  artifacts:
+    - image: hello-world-app-dev
+      docker:
+        dockerfile: Dockerfile.dev
+      # --- NOVA SEÇÃO DE SINCRONIZAÇÃO ---
+      # Habilita o "hot reload" real, sincronizando arquivos em vez de reconstruir.
+      sync:
+        manual:
+          # Para qualquer arquivo dentro da pasta 'src', copie para o destino.
+          - src: 'src/**/*.{js,jsx,ts,tsx,css,html}'
+            dest: .
+          # Faça o mesmo para a pasta 'public' e o vite.config.js
+          - src: 'public/**/*'
+            dest: .
+          - src: 'vite.config.js'
+            dest: .
+manifests:
+  rawYaml:
+    - k8s-manifest.yaml
+portForward:
+  - resourceType: service
+    resourceName: hello-world-service
+    port: 80
+    localPort: 4503

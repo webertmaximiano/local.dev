@@ -1,0 +1,33 @@
+# Dockerfile.dev
+# ATUALIZADO para a versão 20, que é compatível com o Vite moderno.
+FROM node:24-alpine
+
+ARG UID=1000
+ARG GID=1000
+
+# Instala ferramentas para modificar o usuário e o grupo
+RUN apk add --no-cache shadow && \
+    groupmod -g ${GID} node && \
+    usermod -u ${UID} node
+
+# Define o diretório de trabalho
+WORKDIR /home/node/app
+
+# Dá a propriedade do diretório de trabalho ao usuário 'node'
+RUN chown -R node:node /home/node/app
+
+# Muda para o usuário 'node' para todas as operações subsequentes
+USER node
+
+# Copia os arquivos de dependência.
+COPY --chown=node:node package*.json ./
+RUN npm install
+
+# Copia o resto do código da aplicação
+COPY --chown=node:node . .
+
+# Expõe a porta padrão do Vite
+EXPOSE 5173
+
+# Rodar o servidor de desenvolvimento
+CMD ["npm", "run", "dev", "--", "--host"]

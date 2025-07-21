@@ -1,113 +1,222 @@
-# Tutorial: Configurando Volumes para Desenvolvimento Local
+# Guia Definitivo: Desenvolvimento Kubernetes Local no Ubuntu 24.04 com Skaffold e Hot Reload
 
-Este tutorial aborda a configuração de volumes para desenvolvimento local, permitindo que você edite arquivos em sua máquina e veja as alterações refletidas instantaneamente em contêineres Docker ou pods Kubernetes. Isso é essencial para um fluxo de trabalho ágil e eficiente.
+Este guia documenta a solução completa para desenvolver aplicações em um cluster Kubernetes local (via Docker Desktop) no Ubuntu 24.04, resolvendo os problemas de sincronização de arquivos e permissões, e estabelecendo um fluxo de trabalho profissional com "hot reload" instantâneo.
 
-## Problemas Comuns e Soluções
+Nosso projeto de exemplo é um aplicativo **React + Vite** chamado `hello-world-app`, localizado no diretório `/local.dev/hello-world-app`.
 
-Se você está tendo problemas com o mapeamento de diretórios, as causas mais comuns são:
+## O Desafio Inicial
 
-*   **Permissões:** O usuário que executa o processo dentro do contêiner/pod pode não ter permissões de leitura/escrita no diretório mapeado do host. No Linux, isso geralmente envolve o UID/GID do usuário dentro do contêiner.
-*   **Caminhos Incorretos:** Erros de digitação ou caminhos relativos/absolutos incorretos podem impedir o mapeamento.
-*   **Especificidades do Docker Desktop (Windows/macOS):** Nestes sistemas, é necessário configurar os "Shared Drives" ou "File Sharing" nas configurações do Docker Desktop para que os diretórios do host sejam acessíveis aos contêineres.
+Ao usar o Docker Desktop no Ubuntu 24.04, desenvolvedores enfrentam dois grandes obstáculos que quebram o fluxo de "live reload":
 
-## 1. Mapeamento de Volumes com Docker Compose (Bind Mounts)
+1.  **Restrição do AppArmor:** Uma nova configuração de segurança do Ubuntu impede que o Docker Desktop funcione corretamente, causando instabilidade.
+2.  **Falha na Sincronização de Volumes (`hostPath`):** A camada de virtualização do Docker Desktop apresenta bugs ao compartilhar arquivos do sistema host com os contêineres do Kubernetes. Montar volumes diretamente (`hostPath`) se mostra não confiável, fazendo com que os pods não encontrem os arquivos da aplicação e entrem em `CrashLoopBackOff`.
 
-Para aplicações Docker Compose, utilizamos `bind mounts` para mapear um diretório do seu host diretamente para um diretório dentro do contêiner. Isso é ideal para desenvolvimento, pois qualquer alteração no código-fonte local é imediatamente visível no contêiner.
+## A Solução Evolutiva: De Volumes a Skaffold
 
-### Exemplo de `docker-compose.yml`
+A solução não é tentar forçar os volumes a funcionar, mas sim adotar uma ferramenta de orquestração de desenvolvimento que contorne o problema de forma mais inteligente: o **Skaffold**.
 
-Considere uma aplicação Node.js onde o código-fonte está na pasta `.` (raiz do projeto) e precisa ser montado em `/app` dentro do contêiner.
+Este guia é dividido em três etapas:
 
-```yaml
-version: '3.8'
+1.  **Configuração do Ambiente:** Corrigir a pré-condição do sistema operacional.
+2.  **Containerização Correta:** Criar um `Dockerfile` robusto e à prova de erros de permissão.
+3.  **Orquestração Ágil com Skaffold:** Usar o Skaffold para automatizar o ciclo de build, deploy e, o mais importante, a sincronização de arquivos para um "hot reload" instantâneo.
 
-services:
-  minha-app:
-    build: .
-    ports:
-      - "3000:3000"
-    volumes:
-      - .:/app # Mapeia o diretório atual do host para /app no contêiner
-    working_dir: /app
-    # Se houver problemas de permissão no Linux, você pode tentar:
-    # user: "1000:1000" # Substitua pelo seu UID:GID
+---
+
+### Etapa 1: Corrigir a Restrição do AppArmor no Ubuntu 24.04
+
+Esta etapa é obrigatória para a estabilidade do Docker Desktop.
+
+1.  **Abra o Terminal** e edite `sysctl.conf`:
+    ```bash
+    sudo nano /etc/sysctl.conf
+    ```
+2.  Adicione a seguinte linha ao final do arquivo:
+    ```
+    kernel.apparmor_restrict_unprivileged_userns=0
+    ```
+3.  Salve, feche e aplique a alteração:
+    ```bash
+    sudo sysctl -p
+    ```
+4.  Reinicie o Docker Desktop para que a mudança tenha efeito:
+    ```bash
+    systemctl --user restart docker-desktop
+    ```
+Com o ambiente estável, podemos focar na aplicação.
+
+---
+
+### Etapa 2: Preparando a Aplicação e o `Dockerfile`
+
+Vamos configurar os arquivos necessários dentro da nossa pasta de projeto `/local.dev/hello-world-app`.
+
+#### Arquivo 1: `Dockerfile.dev`
+
+Este `Dockerfile` é a receita para criar nossa imagem de desenvolvimento. Ele resolve os problemas de versão do Node.js para o Vite e os problemas de permissão.
+
+```dockerfile
+# Dockerfile.dev
+# Usa a versão 20 do Node.js, que é compatível com o Vite moderno.
+FROM node:24-alpine
+
+# Argumentos para UID/GID para corresponder ao nosso usuário host.
+ARG UID=1000
+ARG GID=1000
+
+# Instala ferramentas para modificar o usuário e o grupo.
+RUN apk add --no-cache shadow && \
+    groupmod -g ${GID} node && \
+    usermod -u ${UID} node
+
+# Define o diretório de trabalho.
+WORKDIR /home/node/app
+
+# Ponto chave: Dá a propriedade do diretório ao usuário 'node' ANTES de qualquer operação.
+RUN chown -R node:node /home/node/app
+
+# Muda para o usuário 'node' para todas as operações subsequentes.
+USER node
+
+# Copia os arquivos de dependência e instala, o que otimiza o cache do Docker.
+COPY --chown=node:node package*.json ./
+RUN npm install
+
+# Copia o resto do código da aplicação.
+COPY --chown=node:node . .
+
+# Expõe a porta padrão do Vite.
+EXPOSE 5173
+
+# Rodar o servidor de desenvolvimento com a flag '--host' para torná-lo acessível.
+CMD ["npm", "run", "dev", "--", "--host"]
+
 ```
+#### Arquivo 2: `vite.config.js`
+Configuramos o Vite para aceitar requisições do nosso Ingress (agilizando.local.dev) e para funcionar bem com o Hot Module Replacement (HMR) dentro do Docker.
 
-**Explicação:**
+```vite.config.js
 
-*   `- .:/app`: O ponto (`.`) representa o diretório atual onde o `docker-compose.yml` está localizado no seu host. `/app` é o caminho dentro do contêiner onde o diretório do host será montado.
-*   `working_dir: /app`: Define o diretório de trabalho padrão dentro do contêiner.
-*   `user: "1000:1000"`: Em sistemas Linux, se o processo dentro do contêiner tentar escrever no volume e o usuário padrão do contêiner não tiver permissão, você pode especificar o UID e GID do seu usuário no host para que as permissões se alinhem. Para descobrir seu UID e GID, use `id -u` e `id -g` no terminal.
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
-## 2. Mapeamento de Volumes com Kubernetes (hostPath)
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    host: true,
+    hmr: {
+        host: 'localhost',
+    },
+    watch: {
+      usePolling: true 
+    },
+    // Permite que o Ingress acesse o servidor.
+    allowedHosts: ['agilizando.local.dev']
+  }
+})
 
-No Kubernetes, o `hostPath` permite que um pod acesse arquivos e diretórios do sistema de arquivos do nó onde o pod está sendo executado. É útil para desenvolvimento local com Docker Desktop, onde o "nó" é sua própria máquina.
+```
+#### Etapa 3: Orquestração com Kubernetes e Skaffold
+Com a aplicação pronta, vamos descrever como executá-la no Kubernetes e como o Skaffold vai gerenciar tudo.
 
-### Exemplo de `Deployment` com `hostPath`
+Arquivo 3: k8s-manifest.yaml
+Este é o nosso manifesto Kubernetes. Ele descreve o Deployment para rodar a aplicação, o Service para expô-la internamente e o Ingress para acessá-la pelo navegador. Note que não usamos mais hostPath, pois o Skaffold cuidará da sincronização.
 
-```yaml
+YAML
+
+# k8s-manifest.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: minha-app-k8s
-  namespace: default
+  name: hello-world-deployment
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: minha-app-k8s
+      app: hello-world
   template:
     metadata:
       labels:
-        app: minha-app-k8s
+        app: hello-world
     spec:
       containers:
-        - name: minha-app-k8s
-          image: minha-app-image:latest # Sua imagem da aplicação
-          ports:
-            - containerPort: 3000
-          volumeMounts:
-            - name: app-code
-              mountPath: /app # Caminho dentro do contêiner
-      volumes:
-        - name: app-code
-          hostPath:
-            path: /home/webert/local.dev/minha-app # Caminho ABSOLUTO no seu host
-            type: DirectoryOrCreate # Garante que o diretório exista
-```
+      - name: hello-world
+        image: hello-world-app-dev # Esta imagem será gerenciada pelo Skaffold
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5173
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-world-service
+spec:
+  selector:
+    app: hello-world
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5173
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hello-world-ingress
+spec:
+  rules:
+  - host: agilizando.local.dev
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: hello-world-service
+            port:
+              number: 80
+Arquivo 4: skaffold.yaml
+Este é o cérebro da nossa operação. Ele diz ao Skaffold como construir, implantar e, crucialmente, sincronizar nossos arquivos para um "hot reload" rápido.
 
-**Explicação:**
+YAML
 
-*   `volumes.name: app-code`: Define um nome para o volume.
-*   `hostPath.path: /home/webert/local.dev/minha-app`: **Este deve ser o caminho ABSOLUTO para o diretório do seu projeto no host.**
-*   `hostPath.type: DirectoryOrCreate`: Garante que o diretório no host será criado se não existir.
-*   `volumeMounts.name: app-code`: Referencia o volume definido.
-*   `volumeMounts.mountPath: /app`: O caminho dentro do contêiner onde o volume será montado.
+# skaffold.yaml
+apiVersion: skaffold/v4beta1
+kind: Config
+metadata:
+  name: hello-world-app
+build:
+  artifacts:
+    - image: hello-world-app-dev
+      docker:
+        dockerfile: Dockerfile.dev
+      # A MÁGICA DO HOT RELOAD: Sincroniza arquivos em vez de reconstruir a imagem.
+      sync:
+        manual:
+          - src: 'src/**/*.{js,jsx,ts,tsx,css,html}'
+            dest: .
+          - src: 'public/**/*'
+            dest: .
+          - src: 'vite.config.js'
+            dest: .
+manifests:
+  rawYaml:
+    - k8s-manifest.yaml
+portForward:
+  # Expõe o serviço no localhost para fácil acesso.
+  - resourceType: service
+    resourceName: hello-world-service
+    port: 80
+    localPort: 4503
+Executando o Ambiente de Desenvolvimento
+Com todos os quatro arquivos configurados na pasta /local.dev/hello-world-app, o fluxo de trabalho se resume a um único comando no terminal:
 
-**Considerações Importantes para `hostPath`:**
+Bash
 
-*   **Caminho Absoluto:** Sempre use caminhos absolutos para `hostPath.path`. Caminhos relativos não funcionarão como esperado.
-*   **Permissões:** Assim como no Docker Compose, problemas de permissão podem ocorrer. Certifique-se de que o processo dentro do contêiner tenha as permissões necessárias para o diretório mapeado no host.
-*   **Portabilidade:** `hostPath` não é portátil para ambientes de produção com múltiplos nós, pois o diretório só existe no nó específico onde o pod está rodando. Para produção, use `PersistentVolumeClaims` com soluções de armazenamento de rede (NFS, Ceph, AWS EBS, etc.). Para desenvolvimento local, é perfeitamente aceitável.
+skaffold dev --port-forward --trigger=polling
+skaffold dev: Inicia o modo de desenvolvimento.
 
-## Solução de Problemas de Permissão (Linux)
+--port-forward: Expõe a aplicação na porta 4503 do seu localhost.
 
-Se você estiver no Linux e tiver problemas de permissão, tente as seguintes abordagens:
+--trigger=polling: A flag essencial que força o Skaffold a detectar mudanças de arquivo no seu ambiente Ubuntu.
 
-1.  **Verificar UID/GID:**
-    ```bash
-    id -u # Mostra seu User ID
-    id -g # Mostra seu Group ID
-    ```
-    Use esses valores na configuração do `user` no `docker-compose.yml` ou, para Kubernetes, certifique-se de que o usuário dentro da imagem do contêiner tenha permissão para o diretório.
-
-2.  **Alterar Permissões do Diretório (CUIDADO!):**
-    Em último caso, você pode alterar as permissões do diretório no host, mas faça isso com cautela, pois pode comprometer a segurança.
-    ```bash
-    sudo chmod -R 777 /caminho/do/seu/projeto # Permissão total (não recomendado para produção)
-    sudo chown -R seu_usuario:seu_grupo /caminho/do/seu/projeto # Mudar o proprietário
-    ```
-
-3.  **SELinux/AppArmor:** Em algumas distribuições Linux, SELinux ou AppArmor podem estar bloqueando o acesso. Verifique os logs do sistema (`journalctl -xe`) para ver se há mensagens relacionadas a eles.
-
-Com este tutorial, você deve ser capaz de configurar volumes de forma eficaz para seu ambiente de desenvolvimento local, tanto com Docker Compose quanto com Kubernetes.
+Agora, quando você edita e salva qualquer arquivo javascript, css, etc., na sua pasta src, o Skaffold irá instantaneamente copiar o arquivo alterado para dentro do contêiner em execução, e o Vite irá atualizar o navegador automaticamente. Você tem a robustez de um deploy Kubernetes com a velocidade de um desenvolvimento local tradicion
