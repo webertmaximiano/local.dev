@@ -63,7 +63,7 @@ Sua aplicação agora roda em contêineres. O próximo passo é aprender a geren
             *   `Deployment`: Garante que um número de cópias (réplicas) da sua aplicação esteja sempre rodando. É aqui que a escalabilidade começa!
             *   `Service`: Cria um ponto de acesso interno e estável para seus Pods.
             *   `Ingress`: Expõe seu serviço para o mundo exterior, permitindo que você acesse sua API pelo navegador. O Kubernetes do Docker Desktop já vem com um Ingress Controller, pronto para uso.
-        5.  **Trabalho Prático:** Converta seu `docker-compose.yml` em arquivos de manifesto do Kubernetes (`deployment.yaml`, `service.yaml`, etc.) e implante sua aplicação no Kubernetes do Docker Desktop.
+        5.  **Trabalho Prático:** Converta seu `docker-compose.yml` em arquivos de manifesto do Kubernetes (`deployment.yaml`, `service.yaml`, etc.) e implante sua aplicação no Kubernetes do Docker Desktop. Como um passo adicional, você pode seguir nosso [tutorial para implantar um banco de dados MySQL](./mysql/tutorial-subindo-o-mysql.md), um passo fundamental para a maioria das aplicações.
 
 ### Fase 3: Automação com CI/CD (GitOps)
 

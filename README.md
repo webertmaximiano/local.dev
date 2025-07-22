@@ -39,7 +39,7 @@ Este repositório está organizado da seguinte forma:
 * **`/kubernetes`**: Contém guias e utilitários gerais sobre Kubernetes.
 * **`/kubernetes-dashboard`**: Arquivos para implantar o Dashboard oficial do Kubernetes.
 * **`/monitoring`**: Configurações e tutorial para o stack de monitoramento com Prometheus e Grafana.
-* **`/mysql`**: Manifesto para implantar um servidor MySQL no Kubernetes.
+* **`/mysql`**: Manifesto e [tutorial](./mysql/tutorial-subindo-o-mysql.md) para implantar um servidor MySQL no Kubernetes.
 * **`/pgsql`**: Manifesto para implantar um servidor PostgreSQL no Kubernetes.
 * **`/traefik`**: Arquivos de configuração e tutorial para usar o Traefik como Ingress Controller no Kubernetes **e como reverse proxy para contêineres Docker**.
 

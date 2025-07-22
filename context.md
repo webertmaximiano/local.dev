@@ -3,7 +3,7 @@ estamos configurando um ambiente de desenvolvimento e produnzindo tutoriais do p
 já temos Ubuntu 24, Docker e Docker Desktop Instalados, habilitamos o Kubernetes via o docker desktop, instalamos o traefik e criamos o tutorial na pasta traefik, expomos a dashboard em traefik.local.dev,
 configuramos prometheus e grafana prometheus.local.dev e grafana.local.dev, criamos uma dashboard no grafana para monitorar o traefik. Temos a pasta mysql e pgsql com deployments para os serviços, ensinamos subir uma aplicação para desenvolvimento local o hello-world-app.
 
-Aguardando novas aulas e treinamentos para nossos alunos.
+
 
 # cluster 
 docker-desktop
