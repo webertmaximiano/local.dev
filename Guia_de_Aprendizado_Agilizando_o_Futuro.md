@@ -47,6 +47,19 @@ Agora, vamos "empacotar" sua aplicação para que ela rode de forma idêntica em
 
         > **Dica de Solução de Problemas:** Se você notar que as alterações no seu código local não estão aparecendo dentro do contêiner (problema de live reload), nós temos um guia específico para resolver isso no Ubuntu. Consulte o **[Guia de Solução: Sincronizando Volumes no Docker/Kubernetes](./volumes/tutorial-volumes-development.md)**.
 
+    **Ambiente de Desenvolvimento Local com Traefik e Portainer (Alternativa ao Kubernetes)**
+
+    Para quem busca um ambiente robusto de desenvolvimento local sem a complexidade inicial do Kubernetes, ou como uma alternativa para gerenciar apenas contêineres Docker, o projeto oferece uma configuração completa com Traefik como reverse proxy e Portainer para gerenciamento visual.
+
+    *   **Sua Missão:**
+        1.  Navegue até a pasta `traefik_portainer` no repositório.
+        2.  Crie a rede Docker externa `web-local` (se ainda não existir): `docker network create web-local`
+        3.  Inicie os serviços: `docker compose -f compose-local-dev.yml up -d`
+        4.  Acesse o **Dashboard do Traefik** em [https://traefik.local.dev](https://traefik.local.dev) (protegido por autenticação básica).
+        5.  Acesse o **Dashboard do Portainer** em [https://portainer.local.dev](https://portainer.local.dev).
+
+        Para mais detalhes e solução de problemas (como o volume do Portainer), consulte o `README.md` principal do projeto.
+
 ### Fase 2: Orquestração Local com Kubernetes
 
 Sua aplicação agora roda em contêineres. O próximo passo é aprender a gerenciar e escalar esses contêineres como os profissionais.
@@ -63,7 +76,7 @@ Sua aplicação agora roda em contêineres. O próximo passo é aprender a geren
             *   `Deployment`: Garante que um número de cópias (réplicas) da sua aplicação esteja sempre rodando. É aqui que a escalabilidade começa!
             *   `Service`: Cria um ponto de acesso interno e estável para seus Pods.
             *   `Ingress`: Expõe seu serviço para o mundo exterior, permitindo que você acesse sua API pelo navegador. O Kubernetes do Docker Desktop já vem com um Ingress Controller, pronto para uso.
-        5.  **Trabalho Prático:** Converta seu `docker-compose.yml` em arquivos de manifesto do Kubernetes (`deployment.yaml`, `service.yaml`, etc.) e implante sua aplicação no Kubernetes do Docker Desktop. Como um passo adicional, você pode seguir nosso [tutorial para implantar um banco de dados MySQL](./mysql/tutorial-subindo-o-mysql.md), um passo fundamental para a maioria das aplicações.
+        5.  **Trabalho Prático:** Converta seu `docker-compose.yml` em arquivos de manifesto do Kubernetes (`deployment.yaml`, `service.yaml`, etc.) e implante sua aplicação no Kubernetes do Docker Desktop. Como um passo adicional, você pode seguir nossos tutoriais para implantar um banco de dados [MySQL](./mysql/tutorial-subindo-o-mysql.md) ou um servidor de cache com [Redis](./redis/tutorial-subindo-o-redis.md), passos fundamentais para a maioria das aplicações.
 
 ### Fase 3: Automação com CI/CD (GitOps)
 

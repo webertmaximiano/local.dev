@@ -40,6 +40,7 @@ Este repositório está organizado da seguinte forma:
 * **`/kubernetes-dashboard`**: Arquivos para implantar o Dashboard oficial do Kubernetes.
 * **`/monitoring`**: Configurações e tutorial para o stack de monitoramento com Prometheus e Grafana.
 * **`/mysql`**: Manifesto e [tutorial](./mysql/tutorial-subindo-o-mysql.md) para implantar um servidor MySQL no Kubernetes.
+* **`/redis`**: Manifesto e [tutorial](./redis/tutorial-subindo-o-redis.md) para implantar um servidor Redis no Kubernetes.
 * **`/pgsql`**: Manifesto para implantar um servidor PostgreSQL no Kubernetes.
 * **`/traefik`**: Arquivos de configuração e tutorial para usar o Traefik como Ingress Controller no Kubernetes **e como reverse proxy para contêineres Docker**.
 
@@ -98,12 +99,19 @@ docker network create traefik-proxy
 **Passo 3: Inicie os serviços**
 Este comando irá baixar as imagens e iniciar os contêineres do Traefik e do Portainer em background.
 ```bash
-docker-compose -f compose-local-dev.yml up -d
+docker compose -f compose-local-dev.yml up -d
 ```
 
 Após a execução, você poderá acessar:
-*   **Dashboard do Traefik:** [http://traefik.localhost](http://traefik.localhost)
-*   **Dashboard do Portainer:** [http://portainer.localhost](http://portainer.localhost)
+*   **Dashboard do Traefik:** [https://traefik.local.dev](https://traefik.local.dev) (Protegido por autenticação básica. Usuário: `webert`, senha definida no `compose-local-dev.yml` ou `traefik_dynamic.toml`.)
+*   **Dashboard do Portainer:** [https://portainer.local.dev](https://portainer.local.dev)
+
+**Nota sobre o Portainer:** Se você encontrar problemas com o volume do Portainer (ex: "volume antigo"), pode ser necessário remover o volume existente para que ele seja recriado. **Isso apagará todos os dados do Portainer.** Para fazer isso, execute:
+```bash
+docker compose -f compose-local-dev.yml down
+docker volume rm traefik_portainer_portainer_data
+docker compose -f compose-local-dev.yml up -d
+```
 
 Para mais detalhes sobre como adicionar seus próprios projetos a este ambiente, consulte o `README.md` dentro da pasta `/traefik_portainer`.
 

@@ -1,0 +1,90 @@
+services:
+  traefik:
+    image: traefik:latest
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+    networks:
+      - web-local
+
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080" # Manter a porta do dashboard
+      - "8082:8082" # Porta para as métricas do Prometheus
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${HOME}/local.dev/traefik:/etc/traefik
+
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    labels:
+      # Redirecionar HTTP para HTTPS (agora via labels)
+      - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
+      - "traefik.http.routers.http-catchall.entrypoints=web"
+      - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+
+      # Dashboard em HTTPS com traefik.local.dev sem solicitar senha
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.local.dev`)"
+      - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
+      - "traefik.http.routers.traefik-dashboard.tls=true"
+      - "traefik.http.routers.traefik-dashboard.service=api@internal"
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+      restart_policy:
+        condition: on-failure
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+     
+    command:
+      - -H
+      - unix:///var/run/docker.sock
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - portainer_data:/data
+    labels: # Configuração do roteamento do Portainer via labels
+      - "traefik.enable=true"
+      - "traefik.http.routers.portainer.rule=Host(`portainer.local.dev`)"
+      - "traefik.http.routers.portainer.entrypoints=websecure"
+      - "traefik.http.routers.portainer.tls=true"
+      - "traefik.http.routers.portainer.service=portainer@docker"
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+
+    networks:
+      - web-local
+    
+networks:
+  web-local:
+    external: true
+    #attachable: true # Adicionada a opção attachable para conectar container fora
+
+volumes:
+  portainer_data:
+    driver: local

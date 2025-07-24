@@ -1,119 +1,76 @@
-# Local Development Environment with Traefik and Portainer
+# Ambiente de Desenvolvimento Local com Docker, Traefik e Portainer
 
-This repository provides a configuration to set up a local development environment using Traefik and Portainer. It aims to help developers, especially students, get familiar with containers, reverse proxy, and load balancing in Docker-based projects. This setup is designed to simplify the management of local development environments.
+Este guia descreve como configurar um ambiente de desenvolvimento local utilizando Docker Compose, com Traefik atuando como reverse proxy e Portainer para o gerenciamento da interface do Docker.
 
-## Features
+Esta é a abordagem recomendada para iniciantes em contêineres antes de avançar para o Kubernetes.
 
-- **Traefik**: A modern reverse proxy and load balancer for Docker and Kubernetes environments.
-- **Portainer**: A lightweight management UI that allows you to manage your Docker environments.
-- **HTTPS by default**: Automatically redirects HTTP traffic to HTTPS.
-- **Local development domains**: Configure multiple local domains for different services (e.g., `traefik.local.dev`, `portainer.local.dev`, `edge.local.dev`).
-- **Docker socket**: Traefik interacts directly with Docker to automatically configure services based on labels.
+## Pré-requisitos
 
-## Prerequisites
+1.  **Docker e Docker Compose:** Certifique-se de que ambos estejam instalados em sua máquina.
+2.  **Entradas no arquivo `hosts`:** Para acessar os serviços através de nomes de domínio locais, adicione as seguintes linhas ao seu arquivo de hosts (`/etc/hosts` no Linux/macOS ou `C:\Windows\System32\drivers\etc\hosts` no Windows):
 
-Before using this setup, ensure you have the following installed:
+    ```
+    127.0.0.1 traefik.local.dev
+    127.0.0.1 portainer.local.dev
+    ```
 
-- [Docker](https://www.docker.com)
-- [Docker Compose](https://docs.docker.com/compose/)
-- [mkcert](https://github.com/FiloSottile/mkcert) (optional, for local HTTPS certificates)
+## Passo 1: Criar a Rede Externa do Docker
 
-## Setup Instructions
+O Traefik precisa de uma rede Docker para se comunicar com os contêineres que ele irá gerenciar. Usamos uma rede externa para que ela possa ser compartilhada por múltiplos projetos do Docker Compose.
 
-1. **Clone the Repository**
+**1. Verifique se a rede já existe:**
+
+Execute o comando abaixo para listar suas redes Docker:
+
+```bash
+docker network ls
+```
+
+Procure por uma rede chamada `web-local`.
+
+**2. Crie a rede (se ela não existir):**
+
+Se a rede `web-local` não aparecer na lista, crie-a com o seguinte comando:
+
+```bash
+docker network create web-local
+```
+
+## Passo 2: Subindo o Ambiente
+
+Com a rede criada, você pode iniciar os serviços do Traefik e do Portainer.
+
+1.  **Navegue até este diretório:**
 
     ```bash
-    git clone https://github.com/webertmaximiano/local.dev.git
-    cd local.dev
+    cd traefik_portainer
     ```
 
-2. **Generate Local Certificates (Optional but Recommended)**
-
-    If you have `mkcert` installed, generate local certificates for your development domains:
+2.  **Execute o Docker Compose:**
 
     ```bash
-    mkcert -install
-    mkcert "*.local.dev"
+    docker-compose -f compose-local-dev.yml up -d
     ```
 
-    Place the generated certificates in the `certs` directory within the project folder.
+    O `-d` executa os contêineres em modo "detached" (em segundo plano).
 
-3. **Start the Environment**
+## Passo 3: Acessando os Serviços
 
-    Use Docker Compose to start the environment:
+Após os contêineres iniciarem, você poderá acessar:
 
-    ```bash
-    docker-compose up -d
-    ```
+*   **Dashboard do Traefik:** [https://traefik.local.dev](https://traefik.local.dev)
+*   **Interface do Portainer:** [https://portainer.local.dev](https://portainer.local.dev)
 
-4. **Access the Services**
+Na primeira vez que acessar o Portainer, você precisará criar um usuário administrador.
 
-    - Traefik Dashboard: [https://traefik.local.dev](https://traefik.local.dev)
-    - Portainer: [https://portainer.local.dev](https://portainer.local.dev)
-    - Edge Service: [https://edge.local.dev](https://edge.local.dev) (example for an additional service)
+## Entendendo o `compose-local-dev.yml`
 
-## Configuration
-
-### Traefik
-
-Traefik is configured to act as a reverse proxy, routing traffic based on the domain name to the appropriate services. It uses the following key settings:
-
-- **HTTP to HTTPS redirection**: All traffic on port 80 is automatically redirected to HTTPS.
-- **Local dashboard**: You can access the Traefik dashboard at `https://traefik.local.dev`.
-
-### Portainer
-
-Portainer is your visual Docker management interface, allowing you to easily manage containers, images, networks, and more.
-
-- It runs on `https://portainer.local.dev` and is secured using HTTPS.
-
-### Custom Domains
-
-You can modify the domain names (`traefik.local.dev`, `portainer.local.dev`, etc.) in the `docker-compose.yml` to suit your needs. If you're using `mkcert`, don't forget to generate certificates for the new domains.
-
-## Docker Compose Services
-
-The `docker-compose.yml` sets up two main services:
-
-1. **Traefik**: Handles routing and reverse proxy.
-
-    ```yaml
-    services:
-      traefik:
-        image: traefik:v2.4
-        ports:
-          - "80:80"
-          - "443:443"
-        volumes:
-          - /var/run/docker.sock:/var/run/docker.sock
-          - ./certs:/certs
-        labels:
-          - "traefik.enable=true"
-          - "traefik.http.routers.traefik.rule=Host(`traefik.local.dev`)"
-          - "traefik.http.routers.traefik.entrypoints=websecure"
-          - "traefik.http.routers.traefik.service=api@internal"
-    ```
-
-2. **Portainer**: A Docker management UI.
-
-    ```yaml
-    services:
-      portainer:
-        image: portainer/portainer-ce
-        command: -H unix:///var/run/docker.sock
-        volumes:
-          - /var/run/docker.sock:/var/run/docker.sock
-          - portainer_data:/data
-        labels:
-          - "traefik.enable=true"
-          - "traefik.http.routers.portainer.rule=Host(`portainer.local.dev`)"
-          - "traefik.http.routers.portainer.entrypoints=websecure"
-    ```
-
-    You can add more services to the `docker-compose.yml` as needed.
-
-## Support and Community
-
-This project was created with the primary goal of helping students from the social initiative [Agilizando o Futuro](https://agilizando.clubesiga.com.br/), which aims to train agile developers for the job market. If you need help or have any questions, join our community on [Discord](https://discord.gg/Hra9vrqgxJ), where we are available to provide support.
-
-We hope this local development environment with Traefik and Portainer facilitates learning and understanding of concepts such as containers, reverse proxy, and load balancing. Good luck and happy learning!
+*   **`services`**: Define os contêineres que compõem nossa aplicação (`traefik` e `portainer`).
+*   **`image`**: Especifica a imagem Docker a ser usada, com uma **versão fixada** para garantir estabilidade.
+*   **`restart: unless-stopped`**: Garante que os contêineres reiniciem automaticamente, a menos que sejam parados manualmente.
+*   **`ports`**: Expõe as portas do contêiner para a máquina host. O Traefik precisa das portas `80` e `443` para capturar o tráfego web.
+*   **`volumes`**: Mapeia arquivos e diretórios entre o host e o contêiner. É assim que o Traefik lê sua configuração e acessa o "socket" do Docker.
+*   **`networks`**: Conecta os serviços à rede `web-local` que criamos.
+*   **`labels`**: A "mágica" do Traefik. São metadados que instruem o Traefik sobre como rotear o tráfego para aquele contêiner específico (qual domínio, qual porta, se deve usar HTTPS, etc.).
+*   **`networks.web-local.external: true`**: Informa ao Docker Compose para usar uma rede pré-existente chamada `web-local` em vez de criar uma nova.
+*   **`volumes.portainer_data`**: Cria um volume nomeado para que os dados do Portainer (usuários, configurações) persistam mesmo que o contêiner seja removido e recriado.

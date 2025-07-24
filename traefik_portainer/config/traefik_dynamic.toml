@@ -13,5 +13,6 @@
   rule = "Host(`traefik.local.dev`)"
   entrypoints = ["websecure"]
   service = "api@internal"
+  middlewares = ["simpleAuth"]
   [http.routers.api.tls]
     certResolver = "leresolver"  

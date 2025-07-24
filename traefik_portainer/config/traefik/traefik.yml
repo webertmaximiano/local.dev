@@ -1,4 +1,4 @@
-logLevel: INFO  # Definição do nível de log global
+logLevel: DEBUG  # Definição do nível de log global
 
 api:
   insecure: true
@@ -28,7 +28,7 @@ entryPoints:
 
 providers:
   file:
-    filename: /etc/traefik/tls.yml
+    filename: /etc/traefik/dynamic_conf/tls.yml
   docker:
     endpoint: unix:///var/run/docker.sock
     watch: true
@@ -40,7 +40,8 @@ websecure:
     dashboard:
       rule: "Host(`traefik.local.dev`)"
       service: api@internal
-      entryPoints:
+      entryPoints: ["websecure"]
+      tls: {}
 
 metrics:
   prometheus:

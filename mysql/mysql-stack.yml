@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0 # Você pode usar 'latest' ou uma versão específica
+    container_name: mysql-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: your_root_password_here # <-- MUDE ISSO!
+      MYSQL_DATABASE: your_database_name # <-- MUDE ISSO!
+      MYSQL_USER: your_user_name # <-- MUDE ISSO!
+      MYSQL_PASSWORD: your_user_password # <-- MUDE ISSO!
+    volumes:
+      - mysql_data:/var/lib/mysql # Volume para persistir os dados do MySQL
+    networks:
+      - web-local # Conecta o MySQL à rede que o Traefik está monitorando
+    labels:
+      # Habilita o Traefik para gerenciar este serviço
+      - "traefik.enable=true"
+      - "traefik.tcp.routers.mysql-router.entrypoints=mysql" # Usa o entrypoint 'mysql' configurado no Traefik
+      - "traefik.tcp.routers.mysql-router.service=mysql-service"
+      # Definição do serviço TCP do MySQL
+      - "traefik.tcp.services.mysql-service.loadbalancer.server.port=3306" # Porta interna do contêiner MySQL
+
+networks:
+  web-local:
+    external: true # Indica que esta rede já existe e é gerenciada externamente (pelo compose-local-dev.yml do Traefik)
+
+volumes:
+  mysql_data:
+    driver: local # Define o driver para o volume local
