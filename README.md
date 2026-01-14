@@ -44,6 +44,21 @@ Este repositório está organizado da seguinte forma:
 * **`/pgsql`**: Manifesto para implantar um servidor PostgreSQL no Kubernetes.
 * **`/traefik`**: Arquivos de configuração e tutorial para usar o Traefik como Ingress Controller no Kubernetes **e como reverse proxy para contêineres Docker**.
 
+**Dois caminhos para usar o Traefik**
+
+Este repositório oferece duas abordagens para usar o Traefik, escolha a que melhor se adapta ao seu fluxo:
+
+- **Traefik no Kubernetes (`/traefik`)**: usar o Traefik como Ingress Controller integrado ao cluster Kubernetes (rotas via Ingress/CRDs, configurado pelos manifestos e tutoriais em `/traefik`). Ideal para ambientes onde você já usa Kubernetes.
+- **Traefik no Docker Swarm / Compose (`/traefik_portainer`)**: configuração pronta para Docker Swarm que monta Traefik + Portainer. Nesta pasta temos os arquivos de `compose`/stack para rodar Traefik como reverse proxy e expor serviços Docker, além de tutoriais práticos (incluindo geração de certificados `mkcert`, criação do `fullchain` e instruções para montar os certificados no container).
+
+O que fizemos nesta branch/estrutura para o caminho Swarm (`traefik_portainer`):
+
+- Adicionamos `compose`/stack para Traefik e Portainer (deploy via Swarm).
+- Documentamos e automatizamos a geração de certificados locais com `mkcert` e a criação de um `local.dev.fullchain.crt` para que o Traefik entregue a cadeia completa.
+- Ajustamos a configuração estática/dinâmica do Traefik para carregar o `tls.yml` dinâmico e os certificados montados em `/certs`.
+- Tratamos um caso prático com `Portainer` (agent + portainer) e resolvemos problemas operacionais (bind mounts, DNS de tasks e healthchecks). Veja `traefik/tutorial-mkcert-localdev.md` e `traefik_portainer/compose-portainer-swarm.yml`.
+
+
 **Ambiente Docker Compose/Swarm (Alternativo)**
 * **`/traefik_portainer`**: Contém uma configuração completa com `docker-compose.yml` para rodar o Traefik como reverse proxy e o Portainer como interface de gerenciamento do Docker. **Esta opção é ideal para quem busca um ambiente robusto sem a complexidade inicial do Kubernetes, ou como uma alternativa ao Traefik do Kubernetes para gerenciar apenas contêineres Docker.**
 
@@ -60,6 +75,7 @@ Para uma experiência guiada, siga os tutoriais passo a passo que preparamos:
 *   **[Guia de Comandos Essenciais do `kubectl`](./kubernetes/kubectl-cheatsheet.md):** Um guia de referência rápida com os comandos mais importantes para o dia a dia com Kubernetes.
 *   **[Tutorial de Traefik com Kubernetes](./traefik/tutorial-kubernetes-traefik.md):** Comece por aqui para configurar o Ingress Controller, que irá expor seus serviços.
 *   **[Guia: Adicionando Novos Domínios Virtuais ao Traefik no Kubernetes](./traefik/tutorial-virtual-domains.md):** Aprenda a configurar domínios personalizados para suas aplicações.
+*   **[Tutorial: Gerando certificados locais com mkcert (local.dev)](./traefik/tutorial-mkcert-localdev.md):** Use `mkcert` para criar uma CA local e gerar um certificado curinga `*.local.dev`, integrar com Traefik e testar HTTPS localmente.
 *   **[Tutorial de Prometheus e Grafana](./monitoring/tutorial-prometheus-grafana.md):** Aprenda a observar a saúde e o desempenho das suas aplicações.
 
 ## 🚀 Como Começar

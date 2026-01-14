@@ -28,12 +28,12 @@ entryPoints:
 
 providers:
   file:
-    filename: /etc/traefik/dynamic_conf/tls.yml
+    filename: /etc/traefik/conf/tls.yml
   docker:
     endpoint: unix:///var/run/docker.sock
     watch: true
     exposedByDefault: false #so abre a dash se tiver true
-    network: web-local # Adicionada a rede web-local
+    network: traefik-public # Usar a rede externa `traefik-public` do stack
 
 websecure:
   routers:

@@ -1,0 +1,110 @@
+version: '3.8'
+
+services:
+  traefik:
+    image: traefik:latest
+    environment:
+      - TZ=America/Sao_Paulo
+    ports:
+      # As portas 80 (HTTP) e 443 (HTTPS) são as portas padrão da web.
+      - "80:80"
+      - "443:443"
+      # A porta 8082 é para expor as métricas para o Prometheus.
+      - "8082:8082"
+    command:
+      # --- Configuração Estática Simplificada ---
+      - --api.dashboard=true
+      # Provedores (Swarm para serviços, File para nossa config de TLS)
+      - --providers.swarm=true
+      - --providers.swarm.exposedbydefault=false
+      - --providers.file.directory=/etc/traefik/conf
+      - --providers.file.watch=true
+      # Pontos de Entrada
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.metrics.address=:8082
+      # Redirecionamento Global HTTP -> HTTPS
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      # Métricas
+      - --metrics.prometheus=true
+      - --metrics.prometheus.entrypoint=metrics
+      # Logs
+      - --log.level=WARN
+      - --accesslog=true
+      # IPs Confiáveis do Cloudflare (ainda importante para logs corretos!)
+      #- "--entrypoints.websecure.forwardedheaders.trustedips=173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/13,104.24.0.0/14,172.64.0.0/13,131.0.72.0/22"
+      
+    volumes:
+      # Permite que o Traefik escute os eventos do Docker para configurar rotas.
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      # Mapeia a nossa pasta de configurações dinâmicas para dentro do contêiner.
+      - "./config/traefik:/etc/traefik/conf:ro"
+      # Mapeia uma pasta para certificados SSL customizados (Gerado na Cloudflare).
+      - "./certs/local.dev:/certs:ro"
+      # Mapeia o volume externo para guardar os logs de acesso.
+      - "traefik_logs:/var/log/traefik"
+    # healthcheck removed temporarily: some images may não incluir 'curl',
+    # o que pode marcar o container como 'unhealthy' indevidamente.
+    # Reintroduza com um comando presente na imagem ou usando sidecar.
+      
+    networks:
+      # Conecta o Traefik à rede pública (para receber tráfego externo) e à de monitoramento.
+      - traefik-public
+      - monitoring
+
+    deploy:
+      # Configurações para o Docker Swarm gerenciar o serviço.
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          # Garante que o Traefik sempre rode no nó "manager" do Swarm.
+          - node.role == manager
+      labels:
+        # Habilita o Traefik para descobrir a si mesmo como um serviço.
+        - "traefik.enable=true"
+        
+        # INCLUSÃO NECESSÁRIA: Especifica a rede que o Traefik deve usar.
+        # Mesmo que a gente ache que é óbvio, para o provedor Swarm, é bom ser explícito.
+        - "traefik.swarm.network=traefik-public"
+
+        # --- Roteador para o Dashboard - usando certificado de origem cloudflare ---
+        - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.local.dev`)"
+        - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
+        - "traefik.http.routers.traefik-dashboard.tls=true"
+      
+        # --- CORREÇÃO PRINCIPAL: Definição Explícita do Serviço ---
+        - "traefik.http.routers.traefik-dashboard.service=api@internal"
+      
+        - "traefik.http.services.traefik-svc.loadbalancer.server.port=8080"
+        
+        # --- Middlewares ---
+        # Definição do middleware de autenticação (seu código está correto).
+        #- "traefik.http.middlewares.traefik-auth.basicauth.users=seu-usuario:senha-criptografada"
+        # Definição do middleware de rate limit (seu código está correto).
+        - "traefik.http.middlewares.rate-limit.ratelimit.average=10"
+        - "traefik.http.middlewares.rate-limit.ratelimit.burst=20"
+
+        # --- CORREÇÃO SECUNDÁRIA: Aplicação dos Middlewares ---
+        # Ao aplicar middlewares definidos nas labels do mesmo serviço, apenas listamos seus nomes.
+        # Removemos o sufixo '@docker' do rate-limit.
+        - "traefik.http.routers.traefik-dashboard.middlewares=rate-limit"
+        
+        # --- Labels do Prometheus (sem alterações) ---
+        - "prometheus.scrape=true"
+        - "prometheus.job=traefik"
+        - "prometheus.port=8082"
+        - "prometheus.path=/metrics"
+# Declaração das redes que já existem no Swarm (criadas manualmente).
+networks:
+  traefik-public:
+    external: true
+  monitoring:
+    external: true
+
+# Declaração dos volumes que já existem no Swarm (criados manualmente).
+volumes:
+  traefik_logs:
+    external: true

@@ -74,3 +74,36 @@ Na primeira vez que acessar o Portainer, você precisará criar um usuário admi
 *   **`labels`**: A "mágica" do Traefik. São metadados que instruem o Traefik sobre como rotear o tráfego para aquele contêiner específico (qual domínio, qual porta, se deve usar HTTPS, etc.).
 *   **`networks.web-local.external: true`**: Informa ao Docker Compose para usar uma rede pré-existente chamada `web-local` em vez de criar uma nova.
 *   **`volumes.portainer_data`**: Cria um volume nomeado para que os dados do Portainer (usuários, configurações) persistam mesmo que o contêiner seja removido e recriado.
+
+## Rodando em Docker Swarm (Portainer Agent)
+
+Para ambientes em Swarm é recomendado usar o `Portainer Agent` em todos os nós e o serviço `portainer` em modo `replicated` apenas nos managers. Existe um arquivo de exemplo para Swarm: `compose-swarm.yml`.
+
+Principais diferenças e instruções rápidas:
+
+- O `agent` deve rodar em todos os nós (deploy mode: `global`) e expõe a comunicação que o `portainer` usa para gerenciar os agentes.
+- O `portainer` deve ser colocado em `replicated` com `placement: constraints: [node.role == manager]`.
+- O Portainer comunica-se com os agentes via `tcp://tasks.agent:9001` (configurado no `command`).
+- Para expor o Portainer via Traefik em Swarm, adicionamos labels no serviço `portainer` (ex: `traefik.http.routers.portainer.rule=Host(...)`, `traefik.http.services.portainer.loadbalancer.server.port=9000`).
+
+Exemplo: para usar em Swarm, crie as redes externas `portainer_agent_network` e `traefik-public`, e um volume externo `portainer_data`, e então aplique os stacks separados para Traefik e Portainer:
+
+```bash
+docker network create --driver overlay portainer_agent_network
+docker network create --driver overlay traefik-public
+docker volume create portainer_data
+
+# Deploy Traefik (stack separado)
+docker stack deploy -c compose-traefik-swarm.yml traefik
+
+# Deploy Portainer + Agent
+docker stack deploy -c compose-portainer-swarm.yml portainer
+```
+
+Observação: ajuste o `Host(...)` das labels no `compose-portainer-swarm.yml` para o domínio desejado (ex: `portainer.corridajusta.com.br`).
+
+Este diretório agora possui dois arquivos de stack para Swarm:
+
+- `compose-traefik-swarm.yml` — stack dedicado do Traefik (recomendo manter separado)
+- `compose-portainer-swarm.yml` — stack do Portainer + Agent
+
