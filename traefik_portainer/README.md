@@ -107,3 +107,60 @@ Este diretório agora possui dois arquivos de stack para Swarm:
 - `compose-traefik-swarm.yml` — stack dedicado do Traefik (recomendo manter separado)
 - `compose-portainer-swarm.yml` — stack do Portainer + Agent
 
+## Certificados TLS (problemas comuns e correção aplicada)
+
+- Sintoma observado: após remover e recriar stacks, o navegador mostrou erro "Sua conexão não é particular" (net::ERR_CERT_AUTHORITY_INVALID) ao acessar `traefik.local.dev` ou `portainer.local.dev`.
+- Causa frequente: o Traefik não estava encontrando o arquivo de certificado montado (path incorreto no arquivo dinâmico `tls.yml`) e passou a servir uma cadeia inválida/default.
+
+Correção aplicada neste repositório:
+
+- Conferir onde o diretório de certificados é montado no `compose`/`stack`. No `compose-traefik-swarm.yml` usamos:
+
+```yaml
+        - "./certs/local.dev:/certs:ro"
+```
+
+Isso significa que dentro do container os arquivos estarão em `/certs/<nome-do-arquivo>` (ex: `/certs/local.dev.fullchain.crt`).
+
+- Ajuste necessário no arquivo dinâmico que o Traefik carrega (`traefik_portainer/config/traefik/tls.yml`): usar o caminho exato dos arquivos que existem dentro do container. Exemplo adotado aqui:
+
+```yaml
+tls:
+    certificates:
+        - certFile: "/certs/local.dev.fullchain.crt"
+            keyFile:  "/certs/local.dev.key"
+```
+
+- Comandos úteis (executados/validados aqui):
+
+```bash
+# criar rede overlay (Swarm)
+docker network create --driver overlay --attachable web-local
+
+# remover rede local antiga (se existir) e recriar em modo swarm
+docker network rm web-local || true
+docker network create --driver overlay --attachable web-local
+
+# redeploy do Traefik e forçar reload
+docker stack deploy -c compose-traefik-swarm.yml traefik
+docker service update --force traefik_traefik
+```
+
+- Validando TLS a partir do host (exemplo):
+
+```bash
+curl -vk --cacert traefik_portainer/certs/local.dev/rootCA.pem https://traefik.local.dev/
+curl -vk --resolve portainer.local.dev:443:127.0.0.1 --cacert traefik_portainer/certs/local.dev/rootCA.pem https://portainer.local.dev/
+```
+
+- Instalar a CA no sistema (Linux Debian/Ubuntu) para confiar no certificado local gerado pelo `mkcert`:
+
+```bash
+sudo cp traefik_portainer/certs/local.dev/rootCA.pem /usr/local/share/ca-certificates/local-dev-rootCA.crt
+sudo update-ca-certificates
+```
+
+- Dica: limpe HSTS no navegador (Chrome) em `chrome://net-internals/#hsts` caso o domínio tenha sido marcado com HSTS após testes falhos.
+
+Se preferir, siga o tutorial `traefik/tutorial-mkcert-localdev.md` para gerar os certificados com `mkcert` e preparar o `fullchain` usado pelo Traefik.
+

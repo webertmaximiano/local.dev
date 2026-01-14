@@ -21,7 +21,7 @@ services:
       - portainer_data:/data
     networks:
       - portainer_agent_network
-      - traefik-public
+      - web-local
     deploy:
       mode: replicated
       replicas: 1
@@ -29,7 +29,7 @@ services:
         constraints: [node.role == manager]
       labels:
         - "traefik.enable=true"
-        - "traefik.swarm.network=traefik-public"
+        - "traefik.swarm.network=web-local"
         - "traefik.http.routers.portainer.rule=Host(`portainer.local.dev`)"
         - "traefik.http.routers.portainer.entrypoints=websecure"
         - "traefik.http.routers.portainer.service=portainer"
@@ -48,5 +48,5 @@ volumes:
 networks:
   portainer_agent_network:
     external: true
-  traefik-public:
+  web-local:
     external: true

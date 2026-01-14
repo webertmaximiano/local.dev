@@ -1,4 +1,4 @@
 tls:
   certificates:
-    - certFile: "/certs/local.dev/local.dev.fullchain.crt"
-      keyFile:  "/certs/local.dev/local.dev.key"
+    - certFile: "/certs/local.dev.fullchain.crt"
+      keyFile:  "/certs/local.dev.key"

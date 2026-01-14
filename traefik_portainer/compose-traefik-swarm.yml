@@ -14,6 +14,10 @@ services:
     command:
       # --- Configuração Estática Simplificada ---
       - --api.dashboard=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.endpoint=unix:///var/run/docker.sock
+      - --providers.docker.network=web-local
       # Provedores (Swarm para serviços, File para nossa config de TLS)
       - --providers.swarm=true
       - --providers.swarm.exposedbydefault=false
@@ -50,7 +54,7 @@ services:
       
     networks:
       # Conecta o Traefik à rede pública (para receber tráfego externo) e à de monitoramento.
-      - traefik-public
+      - web-local
       - monitoring
 
     deploy:
@@ -68,7 +72,7 @@ services:
         
         # INCLUSÃO NECESSÁRIA: Especifica a rede que o Traefik deve usar.
         # Mesmo que a gente ache que é óbvio, para o provedor Swarm, é bom ser explícito.
-        - "traefik.swarm.network=traefik-public"
+        - "traefik.swarm.network=web-local"
 
         # --- Roteador para o Dashboard - usando certificado de origem cloudflare ---
         - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.local.dev`)"
@@ -99,7 +103,7 @@ services:
         - "prometheus.path=/metrics"
 # Declaração das redes que já existem no Swarm (criadas manualmente).
 networks:
-  traefik-public:
+  web-local:
     external: true
   monitoring:
     external: true

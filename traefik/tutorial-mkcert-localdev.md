@@ -61,8 +61,29 @@ Exemplo de `tls.yml` (dynamic configuration):
 ```yaml
 tls:
   certificates:
-    - certFile: "/certs/local.dev/local.dev.crt"
-      keyFile: "/certs/local.dev/local.dev.key"
+    - certFile: "/certs/local.dev.fullchain.crt"
+      keyFile: "/certs/local.dev.key"
+
+## Problema real encontrado e solução aplicada
+
+- Sintoma: após redeploy em Swarm, Traefik mostrou erro ao carregar o certificado e navegadores exibiram `ERR_CERT_AUTHORITY_INVALID`.
+- Diagnóstico: `tls.yml` apontava para um caminho que não existia dentro do container (`/certs/local.dev/local.dev.fullchain.crt`) — neste projeto o diretório `traefik_portainer/certs/local.dev` foi montado como `/certs`, portanto os arquivos ficam em `/certs/<nome-arquivo>`.
+- Solução aplicada: corrigi o caminho em `traefik_portainer/config/traefik/tls.yml` para usar `certFile: "/certs/local.dev.fullchain.crt"` e reimplantei o serviço com `docker service update --force traefik_traefik`.
+
+Comandos úteis de verificação:
+
+```bash
+# verificar rede e criar overlay web-local
+docker network ls | grep web-local || docker network create --driver overlay --attachable web-local
+
+# redeploy do Traefik
+docker stack deploy -c traefik_portainer/compose-traefik-swarm.yml traefik
+docker service update --force traefik_traefik
+
+# testar TLS a partir do host
+curl -vk --cacert traefik_portainer/certs/local.dev/rootCA.pem https://traefik.local.dev/
+curl -vk --resolve portainer.local.dev:443:127.0.0.1 --cacert traefik_portainer/certs/local.dev/rootCA.pem https://portainer.local.dev/
+```
 ```
 
 Observação: Ajuste o caminho de `certFile`/`keyFile` para onde o Traefik monta os arquivos no container/pod (ex: `/certs/...`). Se você usa o `traefik_portainer` com Docker Compose, monte `./traefik/certs:/certs`.
@@ -136,7 +157,7 @@ services:
       - ./traefik/dynamic:/dynamic:ro
 ```
 
-Em seguida, a `dynamic/tls.yml` deve apontar para `/certs/local.dev/local.dev.crt` e `/certs/local.dev/local.dev.key`.
+Em seguida, a `dynamic/tls.yml` deve apontar para `/certs/local.dev.fullchain.crt` e `/certs/local.dev.key`.
 
 ---
 
@@ -240,8 +261,8 @@ Exemplo de `tls.yml` (dynamic configuration) — aponte para o `fullchain` criad
 ```yaml
 tls:
   certificates:
-    - certFile: "/certs/local.dev/local.dev.fullchain.crt"
-      keyFile: "/certs/local.dev/local.dev.key"
+    - certFile: "/certs/local.dev.fullchain.crt"
+      keyFile: "/certs/local.dev.key"
 ```
 
 Observações importantes:
