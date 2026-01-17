@@ -27,3 +27,5 @@ dist-ssr
 hello-world-app/skaffold
 *.env
 traefik_portainer/certs/
+# keep an empty placeholder so developers recreate certs locally
+traefik_portainer/certs/.gitkeep
