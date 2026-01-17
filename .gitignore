@@ -26,3 +26,4 @@ dist-ssr
 *.sw?
 hello-world-app/skaffold
 *.env
+traefik_portainer/certs/
