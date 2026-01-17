@@ -41,7 +41,14 @@ Passo a passo (caminho feliz)
 Se o navegador mostrar HSTS/ERR_CERT_AUTHORITY_INVALID
 ----------------------------------------------------
 - Feche e reabra o Chrome após `mkcert -install`.
-- No Chrome: vá em `chrome://net-internals/#hsts` e limpe o HSTS para `traefik.local.dev` se necessário.
+- Limpar o HSTS para o domínio (Chrome):
+
+   1. Abra `chrome://net-internals/#hsts` no Chrome.
+   2. Na seção *Delete domain security policies*, digite `traefik.local.dev` e clique em *Delete*.
+   3. Feche todas as janelas do Chrome e abra novamente.
+
+- Para Firefox: abra *Preferences* → *Privacy & Security* → *Cookies and Site Data* → *Clear Data* ou remova entradas de certificado/CA no *Certificate Manager*.
+- Observação: HSTS força HTTPS e pode manter erros de certificado em cache; sempre reinicie o navegador após instalar a CA local.
 
 Boas práticas
 -------------
