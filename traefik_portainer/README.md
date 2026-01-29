@@ -90,7 +90,7 @@ Exemplo: para usar em Swarm, crie as redes externas `portainer_agent_network` e 
 
 ```bash
 docker network create --driver overlay portainer_agent_network
-docker network create --driver overlay traefik-public
+docker network create --driver overlay web-local
 docker volume create portainer_data
 
 # Deploy Traefik (stack separado)

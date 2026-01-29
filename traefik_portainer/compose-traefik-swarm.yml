@@ -2,22 +2,19 @@ version: '3.8'
 
 services:
   traefik:
-    image: traefik:latest
+    image: traefik:v3.6.7
     environment:
       - TZ=America/Sao_Paulo
     ports:
       # As portas 80 (HTTP) e 443 (HTTPS) são as portas padrão da web.
       - "80:80"
       - "443:443"
+      
       # A porta 8082 é para expor as métricas para o Prometheus.
       - "8082:8082"
     command:
       # --- Configuração Estática Simplificada ---
       - --api.dashboard=true
-      - --providers.docker=true
-      - --providers.docker.exposedbydefault=false
-      - --providers.docker.endpoint=unix:///var/run/docker.sock
-      - --providers.docker.network=web-local
       # Provedores (Swarm para serviços, File para nossa config de TLS)
       - --providers.swarm=true
       - --providers.swarm.exposedbydefault=false
@@ -25,7 +22,21 @@ services:
       - --providers.file.watch=true
       # Pontos de Entrada
       - --entrypoints.web.address=:80
+      - --entrypoints.web.http.encodedCharacters.allowEncodedSlash=true
+      - --entrypoints.web.http.encodedCharacters.allowEncodedBackSlash=true
+      - --entrypoints.web.http.encodedCharacters.allowEncodedNullCharacter=true
+      - --entrypoints.web.http.encodedCharacters.allowEncodedSemicolon=true
+      - --entrypoints.web.http.encodedCharacters.allowEncodedPercent=true
+      - --entrypoints.web.http.encodedCharacters.allowEncodedQuestionMark=true
+      - --entrypoints.web.http.encodedCharacters.allowEncodedHash=true
       - --entrypoints.websecure.address=:443
+      - --entrypoints.websecure.http.encodedCharacters.allowEncodedSlash=true
+      - --entrypoints.websecure.http.encodedCharacters.allowEncodedBackSlash=true
+      - --entrypoints.websecure.http.encodedCharacters.allowEncodedNullCharacter=true
+      - --entrypoints.websecure.http.encodedCharacters.allowEncodedSemicolon=true
+      - --entrypoints.websecure.http.encodedCharacters.allowEncodedPercent=true
+      - --entrypoints.websecure.http.encodedCharacters.allowEncodedQuestionMark=true
+      - --entrypoints.websecure.http.encodedCharacters.allowEncodedHash=true
       - --entrypoints.metrics.address=:8082
       # Redirecionamento Global HTTP -> HTTPS
       - --entrypoints.web.http.redirections.entrypoint.to=websecure
