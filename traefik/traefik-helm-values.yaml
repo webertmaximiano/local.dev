@@ -7,8 +7,6 @@ ports:
   websecure:
     port: 443
     exposedPort: 443
-    tls:
-      enabled: true
   metrics:
     port: 9100
     exposedPort: 9100
@@ -28,24 +26,20 @@ ingressClass:
   isDefaultClass: true
 
 service:
-  type: LoadBalancer
+  spec:
+    type: LoadBalancer
+
+deployment:
+  hostNetwork: false
+  runAsNonRoot: false
+  runAsUser: 0
+  runAsGroup: 0
 
 additionalArguments:
   - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
   - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-  - "--providers.docker.exposedbydefault=true"
-  - "--providers.docker.endpoint=unix:///var/run/docker.sock"
 
-# Monta o socket do Docker no pod do Traefik usando extraVolumes/extraVolumeMounts
-controller:
-  extraVolumes:
-    - name: docker-socket
-      hostPath:
-        path: /var/run/docker.sock
-  extraVolumeMounts:
-    - name: docker-socket
-      mountPath: /var/run/docker.sock
-      readOnly: true
+# Docker provider removed; Traefik will use only Kubernetes providers
 
 ingressRoute:
   dashboard:

@@ -40,7 +40,7 @@ helm repo update
 
 ### 3.2. Criar o Arquivo `traefik-helm-values.yaml`
 
-Crie o arquivo `/home/webert/local.dev/traefik/traefik-helm-values.yaml` com o conteúdo abaixo. Este arquivo configura o Traefik para operar com Kubernetes e Docker, padronizando as portas e habilitando o acesso ao socket do Docker.
+Crie o arquivo `/home/webert/local.dev/traefik/traefik-helm-values.yaml` com o conteúdo abaixo. Este arquivo configura o Traefik para operar como Ingress Controller no Kubernetes (Docker Desktop), padronizando as portas e usando apenas o provedor Kubernetes.
 
 ```yaml
 # traefik-helm-values.yaml
@@ -52,8 +52,6 @@ ports:
   websecure:
     port: 443
     exposedPort: 443
-    tls:
-      enabled: true
   metrics:
     port: 9100
     exposedPort: 9100
@@ -78,19 +76,9 @@ service:
 additionalArguments:
   - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
   - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-  - "--providers.docker.exposedbydefault=false"
-  - "--providers.docker.endpoint=unix:///var/run/docker.sock"
 
-# Monta o socket do Docker no pod do Traefik usando extraVolumes/extraVolumeMounts
-controller:
-  extraVolumes:
-    - name: docker-socket
-      hostPath:
-        path: /var/run/docker.sock
-  extraVolumeMounts:
-    - name: docker-socket
-      mountPath: /var/run/docker.sock
-      readOnly: true
+# Docker Desktop: se o host já reservar as portas 80/443, libere-as ou use NodePort
+# em vez de LoadBalancer para acessar o Traefik localmente.
 
 ingressRoute:
   dashboard:
