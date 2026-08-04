@@ -35,21 +35,27 @@ Este repositório está organizado da seguinte forma:
 * **`/docker`**: Tutoriais de instalação e uso do Docker e Docker Desktop.
 * **`/ci-cd-automation`**: Tutoriais e exemplos para CI/CD e GitOps.
 
-**Ambiente Kubernetes**
+**Ambiente Docker Swarm / Portainer**
+* **`/traefik_portainer`**: Contém o ambiente principal de estudo para Docker e Docker Swarm com Traefik + Portainer.
+* **`traefik_portainer/compose-traefik-swarm.yml`** e **`traefik_portainer/compose-portainer-swarm.yml`** são a base para implantar Traefik e Portainer em Swarm.
+* Este é o caminho que usamos na VPS: Traefik + Portainer + Docker Swarm funcionando sem stacks Kubernetes.
+* **`/traefik`**: Arquivos de suporte para geração de certificados e configuração de Traefik, incluindo as integrações com o ambiente Swarm.
+
+**Ambiente Kubernetes (Local)**
 * **`/kubernetes`**: Contém guias e utilitários gerais sobre Kubernetes.
 * **`/kubernetes-dashboard`**: Arquivos para implantar o Dashboard oficial do Kubernetes.
 * **`/monitoring`**: Configurações e tutorial para o stack de monitoramento com Prometheus e Grafana.
 * **`/mysql`**: Manifesto e [tutorial](./mysql/tutorial-subindo-o-mysql.md) para implantar um servidor MySQL no Kubernetes.
 * **`/redis`**: Manifesto e [tutorial](./redis/tutorial-subindo-o-redis.md) para implantar um servidor Redis no Kubernetes.
 * **`/pgsql`**: Manifesto para implantar um servidor PostgreSQL no Kubernetes.
-* **`/traefik`**: Arquivos de configuração e tutorial para usar o Traefik como Ingress Controller no Kubernetes **e como reverse proxy para contêineres Docker**.
+* **`/traefik`**: Arquivos de configuração e tutorial para usar o Traefik como Ingress Controller integrado ao Kubernetes.
 
 **Dois caminhos para usar o Traefik**
 
 Este repositório oferece duas abordagens para usar o Traefik, escolha a que melhor se adapta ao seu fluxo:
 
+- - **Traefik no Docker Swarm / Compose (`/traefik_portainer`)**: configuração principal para este projeto, com Traefik + Portainer em Docker Swarm. Aqui temos as stacks Swarm e os tutoriais para rodar o ambiente da VPS sem usar Kubernetes.
 - **Traefik no Kubernetes (`/traefik`)**: usar o Traefik como Ingress Controller integrado ao cluster Kubernetes (rotas via Ingress/CRDs, configurado pelos manifestos e tutoriais em `/traefik`). Ideal para ambientes onde você já usa Kubernetes.
-- **Traefik no Docker Swarm / Compose (`/traefik_portainer`)**: configuração pronta para Docker Swarm que monta Traefik + Portainer. Nesta pasta temos os arquivos de `compose`/stack para rodar Traefik como reverse proxy e expor serviços Docker, além de tutoriais práticos (incluindo geração de certificados `mkcert`, criação do `fullchain` e instruções para montar os certificados no container).
 
 O que fizemos nesta branch/estrutura para o caminho Swarm (`traefik_portainer`):
 
@@ -59,8 +65,9 @@ O que fizemos nesta branch/estrutura para o caminho Swarm (`traefik_portainer`):
 - Tratamos um caso prático com `Portainer` (agent + portainer) e resolvemos problemas operacionais (bind mounts, DNS de tasks e healthchecks). Veja `traefik/tutorial-mkcert-localdev.md` e `traefik_portainer/compose-portainer-swarm.yml`.
 
 
-**Ambiente Docker Compose/Swarm (Alternativo)**
-* **`/traefik_portainer`**: Contém uma configuração completa com `docker-compose.yml` para rodar o Traefik como reverse proxy e o Portainer como interface de gerenciamento do Docker. **Esta opção é ideal para quem busca um ambiente robusto sem a complexidade inicial do Kubernetes, ou como uma alternativa ao Traefik do Kubernetes para gerenciar apenas contêineres Docker.**
+**Ambiente Docker Swarm / Portainer**
+* **`/traefik_portainer`**: Contém o ambiente principal de estudo para Traefik + Portainer em Docker Swarm.
+* Use `traefik_portainer/compose-traefik-swarm.yml` e `traefik_portainer/compose-portainer-swarm.yml` para subir o Swarm que funciona na VPS sem usar stacks Kubernetes.
 
 ---
 ## 📚 Guias e Tutoriais
@@ -80,9 +87,28 @@ Para uma experiência guiada, siga os tutoriais passo a passo que preparamos:
 
 ## 🚀 Como Começar
 
-### 1. Ambiente Kubernetes (Recomendado)
+### 1. Ambiente Docker Swarm (Recomendado para a VPS)
 
-Este ambiente é o foco principal do nosso guia de aprendizado.
+Este é o caminho principal deste projeto: Traefik + Portainer rodando em Docker Swarm.
+
+**Passo 1: Clone o repositório**
+```bash
+git clone https://github.com/webertmaximiano/local.dev.git
+cd local.dev/traefik_portainer
+```
+
+**Passo 2: Siga o tutorial Swarm**
+
+Use o `README.md` dentro de `traefik_portainer` para subir o ambiente Swarm com Traefik e Portainer.
+
+Isso inclui:
+* geração de certificados `mkcert`
+* criação de redes overlay Swarm
+* deploy das stacks `compose-traefik-swarm.yml` e `compose-portainer-swarm.yml`
+
+### 2. Ambiente Kubernetes (Local)
+
+Depois de aprender Docker e Docker Swarm, você pode avançar para Kubernetes local com Docker Desktop.
 
 **Passo 1: Clone o repositório**
 ```bash
@@ -96,40 +122,7 @@ Recomendamos começar pelo **Guia de Comandos Essenciais do `kubectl`** para se 
 
 Após configurar o Traefik, você poderá implantar as outras aplicações como o `kubernetes-dashboard`, `mysql` ou `pgsql` aplicando os manifestos com `kubectl apply -f <caminho-do-arquivo.yaml>`.
 
-### 2. Ambiente Docker Compose/Swarm (Alternativo)
-
-Esta é uma ótima opção para quem quer um ambiente robusto sem a complexidade inicial do Kubernetes.
-
-**Passo 1: Clone o repositório**
-```bash
-git clone https://github.com/webertmaximiano/local.dev.git
-cd local.dev/traefik_portainer
-```
-
-**Passo 2: Crie a rede Docker externa**
-O Traefik precisa de uma rede para se comunicar com os outros contêineres que ele irá gerenciar.
-```bash
-docker network create traefik-proxy
-```
-
-**Passo 3: Inicie os serviços**
-Este comando irá baixar as imagens e iniciar os contêineres do Traefik e do Portainer em background.
-```bash
-docker compose -f compose-local-dev.yml up -d
-```
-
-Após a execução, você poderá acessar:
-*   **Dashboard do Traefik:** [https://traefik.local.dev](https://traefik.local.dev) (Protegido por autenticação básica. Usuário: `webert`, senha definida no `compose-local-dev.yml` ou `traefik_dynamic.toml`.)
-*   **Dashboard do Portainer:** [https://portainer.local.dev](https://portainer.local.dev)
-
-**Nota sobre o Portainer:** Se você encontrar problemas com o volume do Portainer (ex: "volume antigo"), pode ser necessário remover o volume existente para que ele seja recriado. **Isso apagará todos os dados do Portainer.** Para fazer isso, execute:
-```bash
-docker compose -f compose-local-dev.yml down
-docker volume rm traefik_portainer_portainer_data
-docker compose -f compose-local-dev.yml up -d
-```
-
-Para mais detalhes sobre como adicionar seus próprios projetos a este ambiente, consulte o `README.md` dentro da pasta `/traefik_portainer`.
+Para mais detalhes sobre como adicionar novos projetos a este ambiente, consulte os tutoriais dentro de `/traefik`, `/kubernetes` e `/monitoring`.
 
 ## 🌟 Próximos Passos
 

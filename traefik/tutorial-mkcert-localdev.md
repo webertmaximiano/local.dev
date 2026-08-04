@@ -144,20 +144,18 @@ Adicionar `healthcheck` nos serviços Traefik e Portainer no ambiente Swarm ajud
 
 Em resumo: healthchecks aumentam a resiliência do Swarm, mas certifique-se de que os binários usados nas sondas existam dentro da imagem do container ou use uma estratégia alternativa.
 
-7) Integração com `traefik_portainer` (Docker Compose)
+7) Integração com `traefik_portainer` (Docker Swarm)
 
-No `compose-local-dev.yml` monte o diretório `traefik/certs` como volume para o Traefik, por exemplo:
+No `compose-traefik-swarm.yml` monte o diretório `certs/local.dev` como volume para o Traefik, por exemplo:
 
 ```yaml
 services:
   traefik:
     volumes:
-      - ./traefik/certs:/certs:ro
-      - ./traefik/traefik.yml:/traefik.yml:ro
-      - ./traefik/dynamic:/dynamic:ro
+      - ./certs/local.dev:/certs:ro
 ```
 
-Em seguida, a `dynamic/tls.yml` deve apontar para `/certs/local.dev.fullchain.crt` e `/certs/local.dev.key`.
+Em seguida, o `config/traefik/tls.yml` deve apontar para `/certs/local.dev.fullchain.crt` e `/certs/local.dev.key`.
 
 ---
 

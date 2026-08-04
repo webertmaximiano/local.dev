@@ -47,18 +47,19 @@ Agora, vamos "empacotar" sua aplicação para que ela rode de forma idêntica em
 
         > **Dica de Solução de Problemas:** Se você notar que as alterações no seu código local não estão aparecendo dentro do contêiner (problema de live reload), nós temos um guia específico para resolver isso no Ubuntu. Consulte o **[Guia de Solução: Sincronizando Volumes no Docker/Kubernetes](./volumes/tutorial-volumes-development.md)**.
 
-    **Ambiente de Desenvolvimento Local com Traefik e Portainer (Alternativa ao Kubernetes)**
+    **Ambiente de Desenvolvimento Local com Docker Swarm, Traefik e Portainer**
 
-    Para quem busca um ambiente robusto de desenvolvimento local sem a complexidade inicial do Kubernetes, ou como uma alternativa para gerenciar apenas contêineres Docker, o projeto oferece uma configuração completa com Traefik como reverse proxy e Portainer para gerenciamento visual.
+    Para quem busca um ambiente mais próximo do que usamos na VPS, o projeto também oferece uma configuração com Docker Swarm, Traefik e Portainer.
 
     *   **Sua Missão:**
         1.  Navegue até a pasta `traefik_portainer` no repositório.
-        2.  Crie a rede Docker externa `web-local` (se ainda não existir): `docker network create web-local`
-        3.  Inicie os serviços: `docker compose -f compose-local-dev.yml up -d`
-        4.  Acesse o **Dashboard do Traefik** em [https://traefik.local.dev](https://traefik.local.dev) (protegido por autenticação básica).
-        5.  Acesse o **Dashboard do Portainer** em [https://portainer.local.dev](https://portainer.local.dev).
+        2.  Crie as redes overlay do Swarm e gere os certificados com `mkcert`.
+        3.  Suba o Traefik: `docker stack deploy -c compose-traefik-swarm.yml traefik`
+        4.  Suba o Portainer + Agent: `docker stack deploy -c compose-portainer-swarm.yml portainer`
+        5.  Acesse o **Dashboard do Traefik** em [https://traefik.local.dev](https://traefik.local.dev).
+        6.  Acesse o **Dashboard do Portainer** em [https://portainer.local.dev](https://portainer.local.dev).
 
-        Para mais detalhes e solução de problemas (como o volume do Portainer), consulte o `README.md` principal do projeto.
+        Para mais detalhes e solução de problemas, consulte o `README.md` dentro da pasta `/traefik_portainer`.
 
 ### Fase 2: Orquestração Local com Kubernetes
 

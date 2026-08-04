@@ -24,7 +24,7 @@ services:
 
 networks:
   web-local:
-    external: true # Indica que esta rede já existe e é gerenciada externamente (pelo compose-local-dev.yml do Traefik)
+    external: true
 
 volumes:
   mysql_data:
