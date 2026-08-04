@@ -17,6 +17,7 @@ services:
       - --api.dashboard=true
       # Provedores (Swarm para serviços, File para nossa config de TLS)
       - --providers.swarm=true
+      - --providers.swarm.network=web-local
       - --providers.swarm.exposedbydefault=false
       - --providers.file.directory=/etc/traefik/conf
       - --providers.file.watch=true

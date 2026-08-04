@@ -33,7 +33,7 @@ providers:
     endpoint: unix:///var/run/docker.sock
     watch: true
     exposedByDefault: false #so abre a dash se tiver true
-    network: traefik-public # Usar a rede externa `traefik-public` do stack
+    network: web-local # Usar a rede externa `web-local` do stack (corrigido para o compose)
 
 websecure:
   routers:

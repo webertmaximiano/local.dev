@@ -131,8 +131,15 @@ Agora, armazenamos essas credenciais em um Secret do Kubernetes.
 **⚠️ Ponto de Atenção Crucial:** A string de senha gerada pelo `htpasswd` contém o caractere `$`. Ao usar o comando `echo`, o shell pode tentar interpretar isso como uma variável, corrompendo a senha. Para evitar isso, **devemos envolver a string em aspas simples (`' '`)** para garantir que ela seja tratada literalmente.
 
 ```bash
+# Modo recomendado: crie o secret diretamente a partir da saída do htpasswd
+htpasswd -nb admin admin | kubectl create secret generic traefik-dashboard-auth --from-file=users=/dev/stdin -n default
+```
+
+Se preferir inserir manualmente o hash, use o comando abaixo com aspas simples e cuidado extra com os sinais `$`:
+
+```bash
 # CUIDADO: Use aspas simples!
-echo 'admin:$apr1$Hq.DiwS1$rXNYR7D8PHQPxJzFv1gEU1' | kubectl create secret generic traefik-dashboard-auth --from-file=users=/dev/stdin
+echo 'admin:$apr1$Hq.DiwS1$rXNYR7D8PHQPxJzFv1gEU1' | kubectl create secret generic traefik-dashboard-auth --from-file=users=/dev/stdin -n default
 ```
 
 ### 4.3. Criar o Middleware de Autenticação
@@ -177,6 +184,8 @@ Este comando deve falhar com um erro `401 Unauthorized`.
 curl -vk https://traefik.local.dev/dashboard/
 # Expectativa: HTTP/2 401
 ```
+
+> Nota: `https://traefik.local.dev/` pode retornar `404 page not found` porque o dashboard está exposto apenas em `/dashboard/`.
 
 ### 5.2. Testar Acesso ao Dashboard (Com Credenciais)
 
