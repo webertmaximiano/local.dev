@@ -79,23 +79,20 @@ Depois de aprender o fluxo de aplicação e operação em Docker Swarm, avance p
 
 ### Fase 3: Automação com CI/CD (GitOps)
 
-Vamos automatizar todo o processo, desde o `git push` até a implantação da nova versão da sua aplicação.
+Vamos automatizar as verificações e a criação da imagem; a implantação GitOps acontece depois de atualizar e revisar a versão desejada no repositório de configuração.
 
 1.  **CI (Continuous Integration) com GitHub Actions**
     *   **Por que é importante?** Para automatizar os testes e a criação das suas imagens Docker sempre que você enviar código novo para o GitHub.
-    *   **Sua Ferramenta:** **GitHub Actions**. É integrado ao seu repositório e tem um plano gratuito generoso.
-    *   **Sua Missão:** Crie um *workflow* (um arquivo `.yml` na pasta `.github/workflows`) que, a cada `git push`, automaticamente:
-        1.  Rode os testes da sua aplicação.
-        2.  Se os testes passarem, construa uma nova imagem Docker.
-        3.  Envie essa imagem para o **GitHub Container Registry (ghcr.io)**, um registro de imagens gratuito.
+    *   **Sua Ferramenta:** **GitHub Actions**. Cotas, limites e cobrança variam conforme o plano e o tipo de repositório; consulte as condições atuais da sua conta.
+    *   **Sua Missão:** Siga o [tutorial de CI/CD e GitOps](./ci-cd-automation/tutorial-ci-cd-gitops.md). Comece executando lint e build nos pull requests; depois publique uma imagem identificada pelo commit no GHCR após a integração em `main`. Confira a visibilidade do pacote e os limites atuais do GitHub.
 
 2.  **CD (Continuous Deployment) com Argo CD**
-    *   **Por que é importante?** Para que seu cluster Kubernetes se atualize sozinho sempre que uma nova imagem estiver disponível. Essa abordagem se chama **GitOps**.
-    *   **Sua Ferramenta:** **Argo CD**, um projeto open source que é padrão na indústria.
+    *   **Por que é importante?** Para que o estado do cluster seja aplicado a partir de manifests versionados no Git. Argo CD não implanta uma imagem apenas porque ela foi publicada; o manifesto GitOps precisa ser atualizado.
+    *   **Sua Ferramenta:** **Argo CD**, uma ferramenta open source de GitOps para Kubernetes.
     *   **Sua Missão:**
-        1.  Instale o Argo CD no seu cluster K3s.
-        2.  Configure-o para "observar" seu repositório no GitHub.
-        3.  O fluxo será assim: você faz o `push`, o GitHub Actions cria a imagem, atualiza o arquivo de `deployment.yaml` com a nova versão da imagem, e o Argo CD detecta essa mudança e atualiza sua aplicação no K3s. **Tudo automático!**
+        1.  Pratique com um cluster Kubernetes local ou remoto; uma VPS não é obrigatória para aprender.
+        2.  Configure Argo CD para acompanhar um repositório GitOps com manifests sem segredos.
+        3.  Depois da CI publicar a imagem, atualize a tag no manifesto por um pull request. Após integrar a mudança, Argo CD sincroniza o cluster conforme a política configurada. Veja o [tutorial passo a passo](./ci-cd-automation/tutorial-ci-cd-gitops.md).
 
 ### Fase 4: Monitoramento e Observabilidade
 
@@ -113,12 +110,12 @@ Com a aplicação no ar, como saber se ela está funcionando bem?
 
 ### Resumo da Sua Jornada
 
-| Fase | Conceito | Ferramentas Open Source / Gratuitas | Objetivo de Aprendizado |
+| Fase | Conceito | Ferramentas | Objetivo de Aprendizado |
 | :--- | :--- | :--- | :--- |
 | **0** | Fundação | `git`, GitHub, VS Code, Node.js/Python | Controlar versão e criar uma API simples. |
 | **1** | Contêineres | Docker Engine, Docker Compose | Empacotar a aplicação e seus serviços. |
-| **2** | Orquestração | **K3s**, `kubectl` | Rodar a aplicação em um ambiente similar à nuvem, localmente. |
-| **3** | CI/CD (GitOps) | GitHub Actions, **Argo CD**, `ghcr.io` | Automatizar o build, teste e deploy a partir de um `git push`. |
+| **2** | Orquestração | Docker Swarm; Kubernetes como trilha avançada | Operar a aplicação em contêineres e estudar outros orquestradores quando necessário. |
+| **3** | CI/CD (GitOps) | GitHub Actions, **Argo CD**, GHCR | Verificar o código, publicar uma imagem e implantar após atualizar o repositório GitOps. |
 | **4** | Monitoramento | Prometheus, Grafana | Observar a saúde e o desempenho da aplicação. |
 
 ---

@@ -1,78 +1,100 @@
-# Guia de Automação: CI/CD e GitOps com GitHub Actions e Argo CD
+# CI/CD e GitOps para iniciantes
 
-Este guia aborda a **Fase 3** do seu aprendizado: a automação do ciclo de vida do software através de **Integração Contínua (CI)**, **Entrega Contínua (CD)** e **GitOps**. Utilizaremos o **GitHub Actions** para CI e o **Argo CD** para CD, com foco em implantações no Kubernetes.
+Neste tutorial você vai acompanhar uma mudança desde o código até um cluster Kubernetes. Primeiro, o GitHub Actions verifica o projeto e cria uma imagem. Depois, uma mudança revisada no repositório de configuração pede ao Argo CD para atualizar o cluster.
 
-## 🚀 O que é CI/CD e GitOps?
+O exercício é opcional e avançado em relação ao laboratório Docker Swarm padrão deste repositório. Para aprender Argo CD, você pode usar um cluster Kubernetes local; uma VPS não é obrigatória. Argo CD precisa conseguir ler o repositório Git e controlar o cluster onde está instalado. Não precisa expor o cluster à Internet só para o GitHub Actions falar com ele.
 
-*   **Integração Contínua (CI):** É a prática de integrar as alterações de código de vários desenvolvedores em um repositório compartilhado várias vezes ao dia. Cada integração é verificada por builds automatizados e testes, detectando erros rapidamente.
-*   **Entrega Contínua (CD):** Estende a CI, automatizando a entrega de código para ambientes de teste e/ou produção após a fase de CI. O objetivo é ter um pipeline que possa liberar novas versões de software de forma rápida e confiável.
-*   **GitOps:** É uma abordagem para implementar CD que usa o Git como a única fonte de verdade para a infraestrutura declarativa e as aplicações. Com o GitOps, você descreve o estado desejado do seu ambiente em arquivos Git, e uma ferramenta (como o Argo CD) garante que o ambiente real corresponda a esse estado.
+## O que significam CI, CD e GitOps?
 
-## 🛠️ Pré-requisitos
+- **Integração contínua (CI):** cada alteração é verificada automaticamente, por exemplo com lint, build e testes.
+- **Entrega contínua:** depois das verificações, uma versão pronta fica disponível para implantação. A aprovação para produção pode continuar manual.
+- **Implantação contínua:** a implantação também ocorre automaticamente depois dos controles definidos pela equipe.
+- **GitOps:** os arquivos versionados no Git descrevem o estado desejado do ambiente. O Argo CD compara esses arquivos com o cluster e sincroniza as diferenças.
 
-Para entender e aplicar este guia, você precisará:
+Neste exercício, o Actions **não acessa o cluster**. Ele testa o código e publica uma imagem. Você atualiza a versão da imagem no repositório GitOps; o Argo CD percebe o commit nesse repositório e sincroniza o cluster. Publicar uma nova imagem, por si só, não faz o Argo CD implantá-la.
 
-*   Conhecimento básico de Git e GitHub.
-*   Conhecimento básico de Docker e contêineres.
-*   Conhecimento básico de Kubernetes e seus conceitos (Pods, Deployments, Services, Ingress).
-*   **Importante:** Para a execução completa e prática dos exemplos de CD com Argo CD, você precisará de um **cluster Kubernetes remoto e acessível** (ex: Google Kubernetes Engine - GKE, Amazon Elastic Kubernetes Service - EKS, ou uma VPS com K3s/MicroK8s). O Docker Desktop com Kubernetes integrado é excelente para desenvolvimento local, mas não é adequado para a fase de CD com Argo CD, pois ele precisa de um cluster persistente e acessível externamente.
+## Antes de começar
 
-## 1. Integração Contínua (CI) com GitHub Actions
+Você precisa de:
 
-O GitHub Actions permite automatizar, personalizar e executar seus fluxos de trabalho de desenvolvimento de software diretamente no seu repositório GitHub. Usaremos ele para:
+- Uma conta e um repositório GitHub onde possa criar workflows.
+- Uma aplicação Node.js com `package.json`, `package-lock.json`, scripts `lint` e `build`, e um `Dockerfile` de produção na raiz.
+- Git, Docker e noções básicas de Kubernetes.
+- Um cluster Kubernetes local ou remoto, apenas para a parte opcional do Argo CD.
 
-*   Rodar testes da sua aplicação.
-*   Construir imagens Docker da sua aplicação.
-*   Enviar (push) as imagens Docker para um registro de contêineres (ex: GitHub Container Registry - `ghcr.io`).
+O exemplo usa Node.js 24. Se seu projeto usa outra linguagem, substitua as etapas `npm` pelos comandos de verificação próprios dele. O arquivo de lock (`package-lock.json`) deve ser versionado para que `npm ci` instale as dependências registradas no projeto. Se o `package.json` tiver um script `test`, inclua também um passo `run: npm test` no job `verify`; não adicione esse comando se o script não existir.
 
-### 1.1. Estrutura de um Workflow
+## 1. CI: verificar o código em cada pull request
 
-Os workflows do GitHub Actions são definidos em arquivos YAML na pasta `.github/workflows/` do seu repositório.
-
-### 1.2. Exemplo de Workflow: Build e Push de Imagem Docker
-
-Considere uma aplicação Node.js simples com um `Dockerfile`. Este workflow será acionado a cada `push` para o branch `main`.
-
-**Arquivo:** `.github/workflows/build-and-push.yml`
+Crie `.github/workflows/ci-image.yml` no repositório da aplicação. O workflow abaixo roda lint e build em pull requests e em pushes para `main`. Só publica a imagem depois de um push em `main` e se as verificações passarem.
 
 ```yaml
-name: Build and Push Docker Image
+name: Verificar e publicar imagem
 
 on:
+  pull_request:
   push:
-    branches:
-      - main
+    branches: [main]
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+# Padrão restrito. Cada job declara permissões adicionais somente quando precisa.
+permissions:
+  contents: read
 
 jobs:
-  build-and-push:
+  verify:
+    name: Lint e build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v7
+
+      - name: Preparar Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Instalar dependências do lockfile
+        run: npm ci
+
+      - name: Verificar estilo e erros comuns
+        run: npm run lint
+
+      - name: Gerar o build
+        run: npm run build
+
+  publish:
+    name: Publicar imagem no GHCR
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: verify
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write # Permissão para escrever no GitHub Container Registry
-
+      packages: write
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Baixar o código
+        uses: actions/checkout@v7
 
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
+      - name: Preparar Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Entrar no GitHub Container Registry
+        uses: docker/login-action@v4
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker
+      - name: Criar nome e tag da imagem
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=sha,format=long
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+      - name: Construir e publicar a imagem
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true
@@ -80,91 +102,47 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 ```
 
-**Explicação:**
+### Como ler esse workflow
 
-*   `on: push: branches: - main`: O workflow é acionado em cada `push` para o branch `main`.
-*   `permissions: packages: write`: Concede permissão para enviar imagens para o GitHub Container Registry.
-*   `docker/login-action@v3`: Faz login no registro usando seu usuário do GitHub (`github.actor`) e um token de acesso gerado automaticamente (`secrets.GITHUB_TOKEN`).
-*   `docker/metadata-action@v5`: Gera tags e labels para a imagem Docker com base nas informações do Git (ex: `ghcr.io/seu-usuario/seu-repo:latest`, `ghcr.io/seu-usuario/seu-repo:v1.0.0`).
-*   `docker/build-push-action@v5`: Constrói a imagem Docker e a envia para o registro.
+- `on` diz quando executar: em pull requests e em pushes para `main`.
+- `verify` executa lint e build. Um pull request de um fork também pode executar essas verificações, mas não recebe permissão para publicar imagens.
+- `needs: verify` impede a publicação se as verificações falharem.
+- `if` restringe a publicação a pushes para `main`; o workflow não publica imagens a partir de cada pull request.
+- `GITHUB_TOKEN` é criado pelo GitHub para a execução do workflow. `packages: write` permite publicar no GHCR. Não crie um token pessoal para este caso.
+- A tag `sha-...` identifica o commit que produziu a imagem. Ela permite descobrir e implantar a versão exata; evite usar `latest` como referência de implantação.
 
-## 2. Entrega Contínua (CD) com GitOps e Argo CD
+Esse exemplo supõe que `npm run lint`, `npm run build` e o `Dockerfile` existam na raiz. Para associar o pacote ao repositório, inclua no `Dockerfile` um label com a URL do projeto (substitua os nomes de exemplo):
 
-O **Argo CD** é uma ferramenta declarativa de CD baseada em GitOps para Kubernetes. Ele automatiza a implantação de aplicações no seu cluster, monitorando um repositório Git para mudanças e garantindo que o estado do cluster corresponda ao que está definido no Git.
-
-### 2.1. Como o GitOps Funciona com Argo CD
-
-1.  **Repositório de Código (App Repo):** Contém o código-fonte da sua aplicação e o `Dockerfile`.
-2.  **Repositório de Configuração (GitOps Repo):** Contém os manifestos Kubernetes (YAMLs) que descrevem o estado desejado da sua aplicação no cluster. Este é o "único fonte de verdade".
-3.  **Pipeline CI (GitHub Actions):** Quando há um `push` no App Repo, o CI constrói a imagem Docker e a envia para um registro. Em seguida, ele **atualiza o manifesto da imagem** no GitOps Repo (ex: muda `minha-app:v1.0.0` para `minha-app:v1.0.1`).
-4.  **Argo CD:** Monitora o GitOps Repo. Ao detectar uma mudança no manifesto da imagem, ele automaticamente puxa essa mudança e a aplica ao cluster Kubernetes, garantindo que a nova versão da aplicação seja implantada.
-
-### 2.2. Instalação do Argo CD (no seu Cluster Remoto)
-
-Para instalar o Argo CD no seu cluster Kubernetes remoto:
-
-```bash
-# Crie o namespace para o Argo CD
-kubectl create namespace argocd
-
-# Instale o Argo CD
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-
-# Aguarde a inicialização dos pods
-kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=argocd-server -n argocd --timeout=300s
-
-# Obtenha a senha inicial do admin
-kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
-
-# Exponha a UI do Argo CD (ex: via LoadBalancer ou Ingress)
-# Para LoadBalancer (se seu cluster suportar):
-kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
-# Ou configure um Ingress para argocd-server na porta 80
+```dockerfile
+LABEL org.opencontainers.image.source="https://github.com/USUARIO/REPOSITORIO"
 ```
 
-### 2.3. Configurando uma Aplicação no Argo CD
+Confira também **Settings → Actions → General** e a visibilidade do pacote no GHCR. Pacotes publicados pela primeira vez podem ficar privados. Se a publicação for recusada, confira se a política do repositório ou da organização permite a permissão `packages: write`; não substitua o `GITHUB_TOKEN` por um token pessoal sem necessidade. Um cluster que precise baixar uma imagem privada requer uma credencial de leitura configurada como `imagePullSecret`; não coloque essa credencial no repositório.
 
-Após instalar o Argo CD, você pode acessá-lo via navegador (usando o IP do LoadBalancer ou o domínio configurado no Ingress) e fazer login com `admin` e a senha obtida.
+As versões das Actions neste exemplo usam tags principais para facilitar o aprendizado; confira as versões atuais nas páginas oficiais antes de reutilizar o exemplo. Em repositórios de produção, siga a política de segurança da equipe e fixe cada Action a um SHA completo revisado. A documentação do GitHub recomenda permissões mínimas para `GITHUB_TOKEN` e descreve o risco de executar Actions de terceiros. Evite `pull_request_target` para executar código vindo de pull requests: esse evento pode dar ao workflow acesso privilegiado a secrets e permissões.
 
-Para registrar sua aplicação no Argo CD, você pode usar a UI ou a CLI do Argo CD (`argocd`).
+## 2. Conferir a imagem publicada
 
-**Exemplo de criação de aplicação via CLI:**
+Depois que o push para `main` passar pelo workflow:
 
-```bash
-# Faça login no Argo CD CLI
-argocd login <ARGOCD_SERVER_URL>
+1. Abra a aba **Actions** do repositório e confirme que os jobs `verify` e `publish` terminaram com sucesso.
+2. Abra a seção **Packages** do perfil ou da organização e localize a imagem.
+3. Anote a tag `sha-...` gerada para o commit. A imagem terá o formato `ghcr.io/USUARIO/REPOSITORIO:sha-TAG`.
 
-# Adicione seu repositório GitOps (onde estão os manifestos Kubernetes)
-argocd repo add https://github.com/SEU_USUARIO/seu-gitops-repo.git --username <SEU_USUARIO_GIT> --password <SEU_TOKEN_GIT>
+Para uma atividade pública, você pode tornar a imagem de demonstração pública nas configurações do pacote. Faça isso somente se a imagem e o código puderem ser distribuídos publicamente. Imagens privadas exigem que o cluster tenha autorização para baixá-las. O GHCR recomenda o label `org.opencontainers.image.source` no `Dockerfile` para associar o pacote ao repositório.
 
-# Crie a aplicação no Argo CD
-argocd app create minha-app \
-  --repo https://github.com/SEU_USUARIO/seu-gitops-repo.git \
-  --path k8s-manifests/minha-app \
-  --dest-server https://kubernetes.default.svc \
-  --dest-namespace default \
-  --sync-policy automated
-```
+## 3. GitOps: registrar a implantação desejada
 
-**Explicação:**
+Mantenha os manifestos Kubernetes em um repositório GitOps. Para um exercício simples, esse repositório pode ser público e separado do código da aplicação. Não coloque nele senhas, tokens, chaves privadas, arquivos `.env` ou valores secretos. Um Kubernetes `Secret` comum contém dados codificados em Base64; isso não os torna seguros para publicação.
 
-*   `--repo`: O URL do seu repositório GitOps.
-*   `--path`: O caminho dentro do repositório onde estão os manifestos Kubernetes da sua aplicação.
-*   `--dest-server`: O servidor Kubernetes de destino (geralmente `https://kubernetes.default.svc` para o cluster onde o Argo CD está rodando).
-*   `--dest-namespace`: O namespace onde a aplicação será implantada.
-*   `--sync-policy automated`: Configura o Argo CD para sincronizar automaticamente as mudanças do Git para o cluster.
-
-### 2.4. Exemplo de Manifesto Kubernetes (no GitOps Repo)
-
-Seu repositório GitOps (`seu-gitops-repo.git`) conteria algo como:
-
-**Arquivo:** `k8s-manifests/minha-app/deployment.yaml`
+Depois que o Actions publicar uma imagem, altere o campo `image` no Deployment do repositório GitOps para a tag `sha-...` correspondente:
 
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: minha-app
+  namespace: default
 spec:
   replicas: 1
   selector:
@@ -176,14 +154,99 @@ spec:
         app: minha-app
     spec:
       containers:
-      - name: minha-app
-        image: ghcr.io/SEU_USUARIO/seu-repo:latest # Esta tag será atualizada pelo CI
-        ports:
-        - containerPort: 80
+        - name: minha-app
+          image: ghcr.io/USUARIO/REPOSITORIO:sha-TAG_DO_COMMIT
+          ports:
+            - containerPort: 8080
 ```
 
-Quando o GitHub Actions construir uma nova imagem, ele faria um `git commit` e `git push` para atualizar a tag `latest` (ou uma tag de versão específica) neste arquivo `deployment.yaml` no seu repositório GitOps. O Argo CD detectaria essa mudança e implantaria a nova versão no cluster.
+Substitua usuário, repositório, tag e porta pelos valores reais da aplicação. Faça commit dessa alteração e abra um pull request no repositório GitOps. Após a revisão e integração em `main`, o Argo CD poderá sincronizar o estado descrito no Git com o cluster.
 
-## Conclusão
+Essa etapa é intencionalmente explícita: o workflow de aplicação **não recebe permissão de escrita** no repositório GitOps. Mais tarde, uma equipe pode automatizar a criação de um pull request de atualização de imagem, mas isso exige permissões e controles próprios. Não dê a um workflow de build acesso amplo para alterar outro repositório ou implantar diretamente no cluster.
 
-CI/CD e GitOps são pilares do desenvolvimento moderno, permitindo entregas rápidas, confiáveis e auditáveis. Embora a configuração completa do Argo CD exija um cluster remoto, entender os conceitos e a interação entre GitHub Actions e Argo CD é um passo fundamental para agilizar seu futuro na nuvem.
+## 4. Instalar e acessar Argo CD no cluster de estudo
+
+Argo CD consome memória e CPU. Em um computador limitado, deixe-o desligado quando não estiver estudando essa parte. Para o exercício, use os manifests oficiais da versão estável atual. Para uma instalação de produção, escolha e registre uma versão específica seguindo o [guia oficial de instalação](https://argo-cd.readthedocs.io/en/stable/getting_started/):
+
+```bash
+kubectl create namespace argocd
+kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=argocd-server -n argocd --timeout=300s
+```
+
+Para a prática local, encaminhe a interface apenas para o próprio computador. Mantenha este comando aberto em um terminal:
+
+```bash
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+```
+
+Acesse `https://localhost:8080` no navegador. Instale também a [CLI do Argo CD](https://argo-cd.readthedocs.io/en/stable/cli_installation/) e, em outro terminal, obtenha a senha inicial:
+
+```bash
+argocd admin initial-password -n argocd
+```
+
+Mantenha a senha apenas no seu terminal. Faça login pela CLI; ela solicitará a senha sem colocá-la no comando:
+
+```bash
+argocd login localhost:8080 --insecure --username admin
+argocd account update-password
+kubectl delete secret argocd-initial-admin-secret -n argocd
+```
+
+O primeiro comando da CLI usa `--insecure` porque a instalação local tem um certificado autoassinado. Não use essa opção como configuração de um serviço publicado. Não compartilhe a senha nem exponha a interface administrativa diretamente à Internet.
+
+## 5. Registrar a aplicação no Argo CD
+
+Para o primeiro exercício, use um repositório GitOps público que contenha apenas manifests não secretos. Um repositório público não precisa de usuário, token ou chave para ser lido pelo Argo CD.
+
+Salve o manifesto abaixo como `argocd-application.yaml`, substitua a URL e o caminho, e aplique-o com `kubectl`:
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: minha-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/USUARIO/MEU-REPOSITORIO-GITOPS.git
+    targetRevision: main
+    path: k8s-manifests/minha-app
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated: {}
+```
+
+```bash
+kubectl apply -f argocd-application.yaml
+```
+
+O Argo CD passa a observar o caminho indicado. Quando o commit com a nova tag de imagem chega à branch `main` do repositório GitOps, o Argo CD vê a diferença e sincroniza a aplicação. Por padrão, a sincronização automática não remove recursos que foram apagados do Git. Estude opções como `prune` e `selfHeal` antes de habilitá-las: elas mudam como o cluster reage a remoções e alterações feitas fora do Git.
+
+Para um repositório GitOps privado, configure o acesso pelo mecanismo de credenciais do Argo CD usando uma chave de deploy ou integração aprovada pela equipe. Não passe token em argumentos como `--password`, pois ele pode ficar no histórico do terminal ou na lista de processos. Siga a [documentação de conexão de repositórios](https://argo-cd.readthedocs.io/en/stable/user-guide/private-repositories/).
+
+## Resumo do fluxo
+
+```text
+Pull request da aplicação
+        ↓
+GitHub Actions: lint e build
+        ↓ após merge em main
+GitHub Actions: publica imagem identificada pelo commit no GHCR
+        ↓ atualização revisada no repositório GitOps
+Argo CD: sincroniza os manifests com o cluster Kubernetes
+```
+
+CI valida e empacota a aplicação. O repositório GitOps registra qual versão deve rodar. Argo CD aplica esse estado ao cluster. Essa separação dá um histórico revisável de implantação e evita que o workflow de build precise de acesso direto à infraestrutura.
+
+## Referências oficiais
+
+- [GitHub Actions: segurança de uso](https://docs.github.com/en/actions/reference/security/secure-use)
+- [`GITHUB_TOKEN` e permissões em workflows](https://docs.github.com/en/actions/tutorials/authenticate-with-github_token)
+- [Publicar imagens no GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
+- [Argo CD: instalação e primeiros passos](https://argo-cd.readthedocs.io/en/stable/getting_started/)
+- [Argo CD: sincronização automática](https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/)
