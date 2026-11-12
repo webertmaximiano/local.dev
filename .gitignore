@@ -25,7 +25,34 @@ dist-ssr
 *.sln
 *.sw?
 hello-world-app/skaffold
+# Local environment files. Commit sanitized *.example files only.
+.env
+.env.*
+!.env.example
+!.env.*.example
 *.env
-traefik_portainer/certs/
-# keep an empty placeholder so developers recreate certs locally
-traefik_portainer/certs/.gitkeep
+!*.env.example
+
+# Generated local TLS material and private keys
+/traefik_portainer/certs/*
+!/traefik_portainer/certs/.gitkeep
+/traefik/certs/*
+!/traefik/certs/.gitignore
+/certs/*
+*.key
+*.key.pem
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# Kubernetes Secret manifests containing values; use a secret manager or CLI
+*-secret.yaml
+*-secret.yml
+!*-secret.example.yaml
+!*-secret.example.yml
+
+# Local backups can contain credentials copied from real manifests
+*.bak
+*.backup
+*.orig

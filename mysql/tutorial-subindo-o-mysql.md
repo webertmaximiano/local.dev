@@ -11,25 +11,20 @@ Este tutorial guia você no processo de implantação de uma instância do MySQL
 
 ### 1. Criação do Secret para a Senha
 
-Por segurança, a senha do root do MySQL não deve ser colocada diretamente nos arquivos de manifesto. Em vez disso, usamos um `Secret` do Kubernetes para armazená-la de forma segura.
-
-**Manifesto (`mysql-secret.yaml`):**
-
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: mysql-secret
-type: Opaque
-data:
-  ROOT_PASSWORD: bG9jYWxkZXY= # Senha 'localdev' codificada em Base64
-```
-
-**Aplique o manifesto:**
+Não versione senhas em YAML, mesmo quando `data` usa Base64: Base64 é apenas codificação. Crie um arquivo temporário protegido fora do repositório e use-o para criar o Secret:
 
 ```bash
-kubectl apply -f mysql/mysql-secret.yaml
+secret_file=$(mktemp)
+chmod 600 "$secret_file"
+trap 'rm -f "$secret_file"' EXIT
+${EDITOR:-vi} "$secret_file"
+# No editor, informe uma única linha: ROOT_PASSWORD=<sua-senha-local>
+kubectl create secret generic mysql-secret --from-env-file="$secret_file"
+rm -f "$secret_file"
+trap - EXIT
 ```
+
+O arquivo temporário não deve ser copiado para o repositório. O manifesto `mysql-secret.yaml` foi removido porque continha uma credencial; o `.gitignore` bloqueia novos manifests `*-secret.yaml` e `*-secret.yml`. O `.gitignore` não remove arquivos que já estavam rastreados.
 
 ### 2. Criação do PersistentVolumeClaim (PVC)
 
@@ -141,4 +136,4 @@ Para acesso externo ou para se conectar a partir da sua máquina local, você po
 kubectl port-forward svc/mysql 3306:3306
 ```
 
-Agora você pode usar seu cliente MySQL preferido para se conectar a `127.0.0.1:3306` com o usuário `root` e a senha `localdev`.
+Agora use seu cliente MySQL para se conectar a `127.0.0.1:3306` com o usuário `root` e a senha escolhida ao criar o Secret. Não coloque essa senha em comandos salvos, manifests ou documentação.
