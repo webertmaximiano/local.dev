@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-WORKDIR="$(cd "$(dirname "$0")/.." && pwd)"
+WORKDIR="$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"
 cd "$WORKDIR"
 
-mkdir -p "$HOME/.local/bin" traefik/certs/local.dev
+mkdir -p "$HOME/.local/bin" kubernetes/networking/traefik/certs/local.dev
 
 install_via_apt() {
 	echo "Instalando via apt... (pode pedir senha sudo)"
@@ -79,18 +79,18 @@ main() {
 	mkcert -install
 
 	echo "Gerando certificado para *.local.dev e local.dev"
-	mkcert -cert-file traefik/certs/local.dev/local.dev.crt -key-file traefik/certs/local.dev/local.dev.key '*.local.dev' local.dev
+	mkcert -cert-file kubernetes/networking/traefik/certs/local.dev/local.dev.crt -key-file kubernetes/networking/traefik/certs/local.dev/local.dev.key '*.local.dev' local.dev
 
 	CAROOT=$(mkcert -CAROOT)
-	echo "Copiando rootCA.pem para traefik/certs/local.dev"
-	cp "$CAROOT"/rootCA.pem traefik/certs/local.dev/rootCA.pem
+	echo "Copiando rootCA.pem para kubernetes/networking/traefik/certs/local.dev"
+	cp "$CAROOT"/rootCA.pem kubernetes/networking/traefik/certs/local.dev/rootCA.pem
 
 	echo "Pronto. Arquivos gerados:"
-	ls -l traefik/certs/local.dev || true
+	ls -l kubernetes/networking/traefik/certs/local.dev || true
 
 	echo "Testes sugeridos:"
-	echo "  nohup openssl s_server -accept 8443 -cert traefik/certs/local.dev/local.dev.crt -key traefik/certs/local.dev/local.dev.key -WWW &"
-	echo "  curl -vk --resolve portainer.local.dev:8443:127.0.0.1 https://portainer.local.dev:8443/ --cacert traefik/certs/local.dev/rootCA.pem"
+	echo "  nohup openssl s_server -accept 8443 -cert kubernetes/networking/traefik/certs/local.dev/local.dev.crt -key kubernetes/networking/traefik/certs/local.dev/local.dev.key -WWW &"
+	echo "  curl -vk --resolve portainer.local.dev:8443:127.0.0.1 https://portainer.local.dev:8443/ --cacert kubernetes/networking/traefik/certs/local.dev/rootCA.pem"
 }
 
 main "$@"

@@ -1,5 +1,5 @@
 skaffold
-hello-world-app/node_modules
+kubernetes/workloads/examples/hello-world-app/node_modules
 # Logs
 logs
 *.log
@@ -24,7 +24,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-hello-world-app/skaffold
+kubernetes/workloads/examples/hello-world-app/skaffold
 # Local environment files. Commit sanitized *.example files only.
 .env
 .env.*
@@ -34,13 +34,10 @@ hello-world-app/skaffold
 !*.env.example
 
 # Generated local TLS material and private keys
-# Keep the old local certificate path ignored until the running stack is redeployed.
-/traefik_portainer/certs/*
-!/traefik_portainer/certs/.gitkeep
 /infra/swarm/traefik/certs/*
 !/infra/swarm/traefik/certs/.gitkeep
-/traefik/certs/*
-!/traefik/certs/.gitignore
+/kubernetes/networking/traefik/certs/*
+!/kubernetes/networking/traefik/certs/.gitignore
 /certs/*
 *.key
 *.key.pem

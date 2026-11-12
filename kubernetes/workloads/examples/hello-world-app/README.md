@@ -1,3 +1,7 @@
+# Aplicação de exemplo para Kubernetes
+
+Este projeto React + Vite é usado nos exercícios de desenvolvimento com Kubernetes e Skaffold. Para o laboratório Docker Swarm, use os exemplos e stacks em `infra/swarm/`.
+
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

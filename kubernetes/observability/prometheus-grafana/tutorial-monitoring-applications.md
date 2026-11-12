@@ -17,14 +17,14 @@ Para que o Grafana possa exibir dados, o Prometheus precisa primeiro coletá-los
 
 O Prometheus funciona puxando (pulling) métricas de "endpoints" HTTP expostos pelas aplicações. No caso do Traefik, ele já expõe suas métricas em uma porta específica (`9100` por padrão no Helm chart).
 
-No arquivo `monitoring/prometheus-values.yaml`, a seção `extraScrapeConfigs` (ou `serviceMonitor` se você refatorou) instrui o Prometheus a procurar por pods do Traefik e coletar métricas da porta `9100`.
+No arquivo `kubernetes/observability/prometheus-grafana/prometheus-values.yaml`, a seção `extraScrapeConfigs` instrui o Prometheus a procurar por pods do Traefik e coletar métricas da porta `9100`.
 
 ### 1.2. Verificando se o Prometheus está Coletando Dados
 
 Você pode verificar diretamente no dashboard do Prometheus se ele está coletando as métricas do Traefik.
 
 1.  Acesse o dashboard do Prometheus no seu navegador: `https://prometheus.local.dev`
-2.  Faça login com as credenciais que você configurou (admin/admin).
+2.  Faça login com as credenciais que você configurou no ambiente.
 3.  No menu superior, vá em **Status** -> **Targets**.
 4.  Procure por um target com o `job` `traefik`. Ele deve estar no estado `UP` (verde), indicando que o Prometheus está coletando métricas com sucesso.
 
@@ -37,11 +37,11 @@ Agora que o Prometheus está coletando os dados, o Grafana pode acessá-los e tr
 ### 2.1. Acessando o Grafana
 
 1.  Abra seu navegador e acesse: `https://grafana.local.dev`
-2.  Faça login com o usuário `admin` e a senha que você definiu no Secret (`admin` por padrão).
+2.  Faça login com o usuário `admin` e a senha definida no Secret `grafana-admin-secret`.
 
 ### 2.2. Verificando a Fonte de Dados do Prometheus
 
-O Grafana precisa saber onde encontrar o Prometheus. No nosso `monitoring/grafana-values.yaml`, já configuramos isso.
+O Grafana precisa saber onde encontrar o Prometheus. No nosso `kubernetes/observability/prometheus-grafana/grafana-values.yaml`, já configuramos isso.
 
 1.  No Grafana, clique no ícone de engrenagem (Configuration) no menu lateral esquerdo.
 2.  Selecione **Data sources**.

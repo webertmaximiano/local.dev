@@ -6,7 +6,7 @@ Este ambiente é genérico para estudo e desenvolvimento; não contém comandos 
 
 - **Traefik:** stack base, única dona das portas 80/443.
 - **Portainer + Agent:** opcional; ligue apenas para praticar a interface de gerenciamento.
-- **Bancos e monitoramento:** serviços opcionais, adicionados em stacks próprias quando o curso precisar deles.
+- **Bancos e monitoramento:** ainda não há stacks implementadas nesta trilha. Quando forem adicionadas, terão diretórios e comandos próprios; os exemplos Kubernetes ficam em `kubernetes/`.
 
 Cada stack tem diretório e ciclo de vida próprios. O Makefile não inicia tudo de uma vez nem para containers de outros projetos.
 

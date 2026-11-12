@@ -1,4 +1,4 @@
-# monitoring/grafana-values.yaml
+# Kubernetes Grafana values
 
 admin:
   existingSecret: grafana-admin-secret

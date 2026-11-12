@@ -83,7 +83,7 @@ Esta é a família de comandos que você mais usará. Eles são usados para **vi
 *   **Quando usar?** Este é o seu comando principal para implantar qualquer coisa: um Deployment, um Service, um Ingress, etc.
 *   **Exemplo:**
     ```bash
-    kubectl apply -f /home/webert/local.dev/traefik/hello-world.yaml
+    kubectl apply -f kubernetes/networking/traefik/hello-world.yaml
     ```
 
 ### `kubectl create <recurso>`
@@ -138,7 +138,7 @@ Quando as coisas dão errado, estes são seus melhores amigos.
 *   **Quando usar?** Para remover de forma limpa uma aplicação que você implantou com `kubectl apply`.
 *   **Exemplo:**
     ```bash
-    kubectl delete -f /home/webert/local.dev/traefik/hello-world.yaml
+    kubectl delete -f kubernetes/networking/traefik/hello-world.yaml
     ```
 
 ### `kubectl delete <recurso> <nome-do-recurso>`

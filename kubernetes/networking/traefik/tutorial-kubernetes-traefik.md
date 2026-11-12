@@ -1,13 +1,11 @@
 # Guia de Configuração: Traefik no Kubernetes com HTTPS e Domínios Virtuais (Ambiente Local)
 
-Este tutorial detalha o processo de configuração do Traefik como Ingress Controller no Kubernetes (via Docker Desktop), habilitando HTTPS com certificados autoassinados e domínios virtuais para ambiente de desenvolvimento local.
-
-**Novidade:** Agora, o Traefik também será configurado para atuar como um *reverse proxy* para contêineres Docker, permitindo que ele gerencie aplicações tanto do Kubernetes quanto do Docker Compose, tudo a partir de uma única instância do Traefik!
+Este tutorial configura uma instância do Traefik como Ingress Controller para um cluster Kubernetes local. Ela é uma trilha separada do proxy Docker Swarm em `infra/swarm/`: não mantenha os dois ativos ao mesmo tempo se ambos publicarem as portas 80/443. Para voltar ao laboratório padrão, remova o Traefik Kubernetes antes de iniciar `make traefik-up`.
 
 ## Pré-requisitos
 
 *   **Ubuntu 24.04 LTS:** Sistema operacional.
-*   **Docker Desktop:** Com o Kubernetes habilitado e em execução.
+*   **Cluster Kubernetes local:** por exemplo, Docker Desktop ou K3s, iniciado e com o contexto correto selecionado.
 *   **Helm 3:** Gerenciador de pacotes para Kubernetes.
 *   **mkcert:** Ferramenta para criar certificados SSL/TLS locais confiáveis.
 *   **htpasswd:** Ferramenta para criar arquivos de autenticação básica (geralmente instalada com o `apache2-utils`: `sudo apt install apache2-utils`).
@@ -26,7 +24,7 @@ kubectl delete middleware traefik-dashboard-auth --ignore-not-found
 ## 2. Criação do Secret TLS no Kubernetes
 
 ```bash
-kubectl create secret tls local-dev-tls --cert=/home/webert/local.dev/traefik/certs/cert.pem --key=/home/webert/local.dev/traefik/certs/privkey.pem -n default
+kubectl create secret tls local-dev-tls --cert=kubernetes/networking/traefik/certs/local.dev/local.dev.crt --key=kubernetes/networking/traefik/certs/local.dev/local.dev.key -n default
 ```
 
 ## 3. Instalação do Traefik com Helm
@@ -40,10 +38,10 @@ helm repo update
 
 ### 3.2. Criar o Arquivo `traefik-helm-values.yaml`
 
-Crie o arquivo `/home/webert/local.dev/traefik/traefik-helm-values.yaml` com o conteúdo abaixo. Este arquivo configura o Traefik para operar como Ingress Controller no Kubernetes (Docker Desktop), padronizando as portas e usando apenas o provedor Kubernetes.
+Crie o arquivo `kubernetes/networking/traefik/traefik-helm-values.yaml` com o conteúdo abaixo. Este arquivo configura o Traefik para operar como Ingress Controller no Kubernetes (Docker Desktop), padronizando as portas e usando apenas o provedor Kubernetes.
 
 ```yaml
-# traefik-helm-values.yaml
+# kubernetes/networking/traefik/traefik-helm-values.yaml
 
 ports:
   web:
@@ -96,7 +94,7 @@ ingressRoute:
 ### 3.3. Instalar o Traefik
 
 ```bash
-helm install traefik traefik/traefik -f /home/webert/local.dev/traefik/traefik-helm-values.yaml --wait
+helm install traefik traefik/traefik -f kubernetes/networking/traefik/traefik-helm-values.yaml --wait
 ```
 
 ## 4. Protegendo o Dashboard do Traefik (Boa Prática Essencial)
@@ -105,37 +103,24 @@ helm install traefik traefik/traefik -f /home/webert/local.dev/traefik/traefik-h
 
 ### 4.1. Gerar Usuário e Senha
 
-Usaremos o `htpasswd` para criar um par de usuário e senha. Vamos usar `admin` / `admin` como exemplo.
-
-```bash
-htpasswd -nb admin admin
-# Saída: admin:$apr1$Hq.DiwS1$rXNYR7D8PHQPxJzFv1gEU1
-```
+O `htpasswd` solicitará a senha sem exibi-la. Não passe a senha como argumento nem a salve neste repositório.
 
 ### 4.2. Criar o Secret de Autenticação
 
 Agora, armazenamos essas credenciais em um Secret do Kubernetes. 
 
-**⚠️ Ponto de Atenção Crucial:** A string de senha gerada pelo `htpasswd` contém o caractere `$`. Ao usar o comando `echo`, o shell pode tentar interpretar isso como uma variável, corrompendo a senha. Para evitar isso, **devemos envolver a string em aspas simples (`' '`)** para garantir que ela seja tratada literalmente.
+Crie o Secret diretamente a partir do hash, sem imprimi-lo ou armazená-lo em um arquivo versionado. `htpasswd` solicitará a senha interativamente:
 
 ```bash
-# Modo recomendado: crie o secret diretamente a partir da saída do htpasswd
-htpasswd -nb admin admin | kubectl create secret generic traefik-dashboard-auth --from-file=users=/dev/stdin -n default
-```
-
-Se preferir inserir manualmente o hash, use o comando abaixo com aspas simples e cuidado extra com os sinais `$`:
-
-```bash
-# CUIDADO: Use aspas simples!
-echo 'admin:$apr1$Hq.DiwS1$rXNYR7D8PHQPxJzFv1gEU1' | kubectl create secret generic traefik-dashboard-auth --from-file=users=/dev/stdin -n default
+htpasswd -nB admin | kubectl create secret generic traefik-dashboard-auth --from-file=users=/dev/stdin -n default
 ```
 
 ### 4.3. Criar o Middleware de Autenticação
 
-Crie um arquivo `traefik/traefik-dashboard-auth-middleware.yaml` que define como o Traefik deve usar o secret que acabamos de criar.
+Crie um arquivo `kubernetes/networking/traefik/traefik-dashboard-auth-middleware.yaml` que define como o Traefik deve usar o secret que acabamos de criar.
 
 ```yaml
-# traefik/traefik-dashboard-auth-middleware.yaml
+# kubernetes/networking/traefik/traefik-dashboard-auth-middleware.yaml
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
@@ -147,7 +132,7 @@ spec:
 
 Aplique este middleware ao cluster:
 ```bash
-kubectl apply -f /home/webert/local.dev/traefik/traefik-dashboard-auth-middleware.yaml
+kubectl apply -f kubernetes/networking/traefik/traefik-dashboard-auth-middleware.yaml
 ```
 
 ### 4.4. Atualizar o `traefik-helm-values.yaml`
@@ -159,7 +144,7 @@ Esta seção não é mais necessária, pois o `traefik-helm-values.yaml` já con
 Se você precisar atualizar a instalação do Traefik após a primeira vez (por exemplo, para mudar alguma configuração no `traefik-helm-values.yaml`), use o comando `helm upgrade`:
 
 ```bash
-helm upgrade traefik traefik/traefik -f /home/webert/local.dev/traefik/traefik-helm-values.yaml --wait
+helm upgrade traefik traefik/traefik -f kubernetes/networking/traefik/traefik-helm-values.yaml --wait
 ```
 
 ## 5. Verificação da Instalação e Segurança
@@ -180,20 +165,16 @@ curl -vk https://traefik.local.dev/dashboard/
 Este comando deve ter sucesso, retornando o HTML do dashboard.
 
 ```bash
-curl -vk --user admin:admin https://traefik.local.dev/dashboard/
+curl -k --user admin https://traefik.local.dev/dashboard/
 # Expectativa: HTTP/2 200
 ```
 
 Ao acessar `https://traefik.local.dev/dashboard/` no navegador, uma janela de login deve aparecer.
 
-### 5.3. Verificação do Provedor Docker
+### 5.3. Verificação do provedor Kubernetes
 
-Para confirmar que o Traefik está enxergando os contêineres Docker, você pode:
-
-1.  Acessar o Dashboard do Traefik (`https://traefik.local.dev/dashboard/`).
-2.  Navegar até a seção **Providers**.
-3.  Você deverá ver o provedor **Docker** listado, e ele começará a mostrar os serviços Docker que você iniciar com os labels corretos.
+No Dashboard, confira se os routers e services Kubernetes aparecem depois de aplicar os manifests de uma aplicação. Este Traefik não descobre containers Docker nem serviços Compose; para esses ambientes, use o laboratório Swarm documentado em `infra/swarm/`.
 
 ## 6. Implantação de uma Aplicação de Exemplo
 
-(Esta seção permanece a mesma)
+Aplique um Deployment, um Service e um recurso Ingress para uma aplicação. O exemplo de roteamento está em `kubernetes/networking/traefik/hello-world.yaml`.

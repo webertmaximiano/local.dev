@@ -1,119 +1,34 @@
-# Guia Agilizando o Futuro: Do Zero à Nuvem com Kubernetes e Docker
+# Agilizando o Futuro: Docker Swarm e Kubernetes
 
-![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white) ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white) ![Traefik](https://img.shields.io/badge/Traefik-9D61E1?style=for-the-badge&logo=traefikmesh&logoColor=white) ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=prometheus&logoColor=white) ![Grafana](https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white)
+Este repositório ensina desenvolvimento e operação de aplicações em contêineres, começando por um laboratório Docker Swarm simples e avançando para Kubernetes. O [guia de aprendizagem](./Guia_de_Aprendizado_Agilizando_o_Futuro.md) apresenta a sequência dos estudos.
 
-Este não é apenas um repositório de código. É o seu **guia prático e completo** para dominar as tecnologias de nuvem e DevOps que o mercado de trabalho exige.
+## Caminho recomendado: Docker Swarm local
 
-Criado como a espinha dorsal do projeto social **Agilizando o Futuro**, este guia foi desenhado para levar desenvolvedores(as) do conhecimento zero em contêineres até a orquestração de aplicações complexas em Kubernetes, tudo de forma prática e no seu próprio computador.
+O laboratório principal está em [`infra/swarm/`](./infra/swarm/). Ele oferece um Traefik central e stacks opcionais, controladas por comandos explícitos na raiz: `make traefik-up`, `make portainer-up` e seus alvos `down`. Veja [`make help`](./Makefile) e o [guia do laboratório](./infra/swarm/README.md).
 
-### Para Quem é Este Guia?
-* Para desenvolvedores que querem dar o próximo passo na carreira e aprender DevOps.
-* Para estudantes de tecnologia que buscam experiência prática além da faculdade.
-* Para profissionais que desejam entender e implementar Kubernetes em seus próprios projetos.
+Uma VPS pequena pode começar com um nó Swarm. O Swarm também suporta vários nós e réplicas distribuídas. Um Swarm local de um nó ajuda a aprender o fluxo, mas não simula disponibilidade entre máquinas.
 
----
+## Trilha avançada: Kubernetes
 
-### 🛠️ Pré-requisitos
+Os tutoriais, manifests e aplicações didáticas Kubernetes estão organizados em [`kubernetes/`](./kubernetes/README.md):
 
-Antes de começar, garanta que você tenha as seguintes ferramentas instaladas, de acordo com o caminho que deseja seguir:
-* **Para ambos os ambientes:**
-    * Git
-    * Docker
-* **Apenas para o ambiente Kubernetes:**
-    * kubectl
-    * Um cluster Kubernetes local (ex: habilitado no Docker Desktop, ou usando K3s).
+- `cluster/`: cluster local e kubectl;
+- `workloads/`: exemplos, bancos e armazenamento;
+- `networking/traefik/`: Ingress e domínios;
+- `observability/prometheus-grafana/`: métricas e dashboards;
+- `tools/portainer/`: exemplo de gestão visual.
 
----
+Kubernetes é uma opção para requisitos que justifiquem sua complexidade operacional. Imagens e práticas de aplicação podem ser compartilhadas com Swarm; os manifests de cada orquestrador exigem configuração própria.
 
-### 📂 Estrutura do Repositório
+## Outras trilhas
 
-Este repositório está organizado da seguinte forma:
+- [`docker/`](./docker/): Docker Engine, Compose e exemplos;
+- [`docker/examples/mysql/compose.yml`](./docker/examples/mysql/compose.yml): exemplo Compose separado do laboratório Swarm;
+- [`git-github/`](./git-github/): Git e GitHub;
+- [`vscode/`](./vscode/): editor e ferramentas;
+- [`ci-cd-automation/`](./ci-cd-automation/): CI/CD e GitOps;
+- [`volumes/`](./volumes/): desenvolvimento e sincronização de arquivos.
 
-* **`Guia_de_Aprendizado_Agilizando_o_Futuro.md`**: O documento central que guia toda a sua jornada de aprendizado.
-* **`/git-github`**: Tutoriais e exemplos para Git e GitHub.
-* **`/vscode`**: Tutoriais e configurações para o Visual Studio Code.
-* **`/docker`**: Tutoriais de instalação e uso do Docker e Docker Desktop.
-* **`/ci-cd-automation`**: Tutoriais e exemplos para CI/CD e GitOps.
+## Começar
 
-**Ambiente local Docker Swarm / Portainer**
-* **`/infra/swarm`**: laboratório genérico com Traefik central, Portainer opcional e stacks separadas, operadas pelo Makefile da raiz. O [guia do Portainer](./infra/swarm/portainer/README.md) explica quando usar a interface e como desligá-la para poupar recursos.
-* Use uma única instância local do Traefik nas portas 80/443. Não inicie os caminhos Swarm e Kubernetes ao mesmo tempo nas mesmas portas.
-* **`/traefik`** e **`/kubernetes`**: trilha separada para estudar Traefik como Ingress Controller Kubernetes.
-
-**Ambiente Kubernetes (Local)**
-* **`/kubernetes`**: Contém guias e utilitários gerais sobre Kubernetes.
-* **`/kubernetes-dashboard`**: Arquivos para implantar o Dashboard oficial do Kubernetes.
-* **`/monitoring`**: Configurações e tutorial para o stack de monitoramento com Prometheus e Grafana.
-* **`/mysql`**: Manifesto e [tutorial](./mysql/tutorial-subindo-o-mysql.md) para implantar um servidor MySQL no Kubernetes.
-* **`/redis`**: Manifesto e [tutorial](./redis/tutorial-subindo-o-redis.md) para implantar um servidor Redis no Kubernetes.
-* **`/pgsql`**: Manifesto para implantar um servidor PostgreSQL no Kubernetes.
-* **`/traefik`**: Arquivos de configuração e tutorial para usar o Traefik como Ingress Controller integrado ao Kubernetes.
-
-**Dois ambientes distintos, uma instância por ambiente**
-
-- **Docker Swarm local:** use [`infra/swarm/README.md`](./infra/swarm/README.md). Este é o proxy central de desenvolvimento, com `*.local.dev` e HTTPS local.
-- **Kubernetes local:** use `/traefik` e `/kubernetes` somente quando estiver estudando Kubernetes. Não publique outro Traefik nas mesmas portas 80/443 enquanto a stack Swarm estiver ativa.
-
----
-## 📚 Guias e Tutoriais
-
-Para uma experiência guiada, siga os tutoriais passo a passo que preparamos:
-
-*   **[Guia Essencial: Git e GitHub para Iniciantes](./git-github/tutorial-git-github-para-iniciantes.md):** Aprenda os fundamentos do controle de versão e colaboração.
-*   **[Guia Essencial: Visual Studio Code para Iniciantes](./vscode/tutorial-vscode-para-iniciantes.md):** Configure e otimize seu ambiente de desenvolvimento.
-*   **[Guia de Instalação: Docker e Docker Desktop](./docker/tutorial-instalacao-docker.md):** Instale e configure o Docker no seu ambiente.
-*   **[Guia de Solução: Sincronizando Volumes no Docker/Kubernetes](./volumes/tutorial-volumes-development.md):** Resolva problemas de sincronização de arquivos entre seu PC e os contêineres.
-*   **[Guia de Automação: CI/CD e GitOps](./ci-cd-automation/tutorial-ci-cd-gitops.md):** Automatize o ciclo de vida do software com GitHub Actions e Argo CD.
-*   **[Guia de Comandos Essenciais do `kubectl`](./kubernetes/kubectl-cheatsheet.md):** Um guia de referência rápida com os comandos mais importantes para o dia a dia com Kubernetes.
-*   **[Tutorial de Traefik com Kubernetes](./traefik/tutorial-kubernetes-traefik.md):** Comece por aqui para configurar o Ingress Controller, que irá expor seus serviços.
-*   **[Guia: Adicionando Novos Domínios Virtuais ao Traefik no Kubernetes](./traefik/tutorial-virtual-domains.md):** Aprenda a configurar domínios personalizados para suas aplicações.
-*   **[Ambiente local Traefik + Portainer](./infra/swarm/README.md):** Suba o proxy central com `make traefik-up`; Portainer e futuros serviços ficam em alvos opcionais.
-*   **[Tutorial de Prometheus e Grafana](./monitoring/tutorial-prometheus-grafana.md):** Aprenda a observar a saúde e o desempenho das suas aplicações.
-
-## 🚀 Como Começar
-
-### 1. Ambiente local Docker Swarm
-
-Este é o caminho para desenvolvimento local com um Traefik central, Portainer e domínios HTTPS `*.local.dev`.
-
-**Passo 1: Clone o repositório**
-```bash
-git clone https://github.com/webertmaximiano/local.dev.git
-cd local.dev
-```
-
-**Passo 2: Siga o tutorial Swarm**
-
-Siga [`infra/swarm/README.md`](./infra/swarm/README.md). Confira as portas antes de iniciar: não mantenha duas instâncias locais do Traefik nas portas 80/443.
-
-Isso inclui:
-* geração de certificados `mkcert`
-* criação de redes overlay Swarm
-* deploy das stacks `make traefik-up` e `make portainer-up`
-
-### 2. Ambiente Kubernetes (Local)
-
-Depois de aprender Docker e Docker Swarm, você pode avançar para Kubernetes local com Docker Desktop.
-
-**Passo 1: Clone o repositório**
-```bash
-git clone https://github.com/webertmaximiano/local.dev.git
-cd local.dev
-```
-
-**Passo 2: Siga os tutoriais**
-
-Recomendamos começar pelo **Guia de Comandos Essenciais do `kubectl`** para se familiarizar com a ferramenta e, em seguida, seguir os tutoriais de Traefik e Monitoramento.
-
-Após configurar o Traefik, você poderá implantar as outras aplicações como o `kubernetes-dashboard`, `mysql` ou `pgsql` aplicando os manifestos com `kubectl apply -f <caminho-do-arquivo.yaml>`.
-
-Para mais detalhes sobre como adicionar novos projetos a este ambiente, consulte os tutoriais dentro de `/traefik`, `/kubernetes` e `/monitoring`.
-
-## 🌟 Próximos Passos
-
-Este repositório é um projeto vivo e continuará a ser atualizado com:
-*   Novos tutoriais, cobrindo as fases de CI/CD com ArgoCD e GitHub Actions.
-*   Mais exemplos de aplicações para você implantar.
-*   Melhorias na documentação e nos scripts de automação.
-
-Sinta-se à vontade para contribuir, abrir issues e fazer parte da comunidade **Agilizando o Futuro**!
+Clone o repositório e veja os alvos disponíveis: `make help`. Para preparar o ambiente Swarm, siga [`infra/swarm/README.md`](./infra/swarm/README.md). Para estudar Kubernetes depois, siga [`kubernetes/README.md`](./kubernetes/README.md). Não suba dois proxies locais que disputem as portas 80/443 ao mesmo tempo.

@@ -60,23 +60,22 @@ Agora, vamos "empacotar" sua aplicação para que ela rode de forma idêntica em
 
     Use os manifests e comandos como configuração reproduzível; Portainer é um apoio visual para aprender e observar operações. O [guia de Portainer](./infra/swarm/portainer/README.md) apresenta exercícios e cuidados de segurança. Cada stack tem comandos próprios. O Makefile não inicia todas as opções nem para containers de outros projetos.
 
-### Fase 2: Orquestração Local com Kubernetes
+### Fase 2: Kubernetes como trilha avançada
 
-Sua aplicação agora roda em contêineres. O próximo passo é aprender a gerenciar e escalar esses contêineres como os profissionais.
+Depois de aprender o fluxo de aplicação e operação em Docker Swarm, avance para Kubernetes se seus objetivos pedirem essa plataforma. Consulte [`kubernetes/README.md`](./kubernetes/README.md) para a ordem de estudo e os exemplos organizados por assunto.
 
-1.  **Docker Desktop com Kubernetes Integrado: Seu Próprio Data Center no PC**
-    *   **Por que é importante?** Kubernetes (ou k8s) é o sistema que orquestra contêineres em produção. O Docker Desktop já vem com um cluster Kubernetes leve e funcional, perfeito para desenvolvimento local.
-    *   **Suas Ferramentas:** **Docker Desktop** (com Kubernetes habilitado) e a ferramenta de linha de comando **`kubectl`**.
+1.  **Cluster local, kubectl e workloads**
+    *   **Por que é importante?** Kubernetes oferece outro modelo de orquestração, com objetos e práticas próprias. Um cluster local permite aprender esses conceitos sem alterar o laboratório Swarm.
+    *   **Suas Ferramentas:** Um cluster Kubernetes local, como Docker Desktop ou K3s, e a ferramenta de linha de comando **`kubectl`**.
     *   **Sua Missão:**
-        1.  Certifique-se de que o Kubernetes está habilitado nas configurações do Docker Desktop.
-        2.  Instale o `kubectl`, a ferramenta de linha de comando para interagir com o cluster. No Ubuntu, a forma mais fácil é via Snap: `sudo snap install kubectl --classic`.
-        3.  Verifique se o `kubectl` está conectado ao cluster do Docker Desktop: `kubectl config get-contexts`. Você deve ver `docker-desktop` como o contexto atual.
-        4.  Aprenda os **conceitos fundamentais do Kubernetes**:
-            *   `Pod`: A menor unidade de computação, onde seu contêiner vive.
-            *   `Deployment`: Garante que um número de cópias (réplicas) da sua aplicação esteja sempre rodando. É aqui que a escalabilidade começa!
+        1.  Prepare o cluster e confira o contexto ativo com `kubectl config get-contexts`.
+        2.  Siga [`kubernetes/cluster/kubectl-cheatsheet.md`](./kubernetes/cluster/kubectl-cheatsheet.md).
+        3.  Aprenda os **conceitos fundamentais do Kubernetes**:
+            *   `Pod`: A menor unidade executável; normalmente é criado e mantido por um controlador.
+            *   `Deployment`: Mantém réplicas de uma aplicação stateless e oferece atualizações declarativas.
             *   `Service`: Cria um ponto de acesso interno e estável para seus Pods.
-            *   `Ingress`: Expõe seu serviço para o mundo exterior, permitindo que você acesse sua API pelo navegador. O Kubernetes do Docker Desktop já vem com um Ingress Controller, pronto para uso.
-        5.  **Trabalho Prático:** Converta seu `docker-compose.yml` em arquivos de manifesto do Kubernetes (`deployment.yaml`, `service.yaml`, etc.) e implante sua aplicação no Kubernetes do Docker Desktop. Como um passo adicional, você pode seguir nossos tutoriais para implantar um banco de dados [MySQL](./mysql/tutorial-subindo-o-mysql.md) ou um servidor de cache com [Redis](./redis/tutorial-subindo-o-redis.md), passos fundamentais para a maioria das aplicações.
+            *   `Ingress`: Expõe seu serviço para o mundo exterior, permitindo que você acesse sua API pelo navegador. Ingress precisa de um Ingress Controller instalado no cluster, como o Traefik; o recurso Ingress sozinho não instala esse controlador.
+        4.  **Trabalho Prático:** Crie os recursos Kubernetes equivalentes à aplicação, começando por Deployment e Service. Os manifests do Swarm não são aplicados diretamente no Kubernetes. Como passos adicionais, siga os tutoriais de [MySQL](./kubernetes/workloads/databases/mysql/tutorial-subindo-o-mysql.md) ou [Redis](./kubernetes/workloads/databases/redis/tutorial-subindo-o-redis.md).
 
 ### Fase 3: Automação com CI/CD (GitOps)
 
@@ -102,13 +101,13 @@ Vamos automatizar todo o processo, desde o `git push` até a implantação da no
 
 Com a aplicação no ar, como saber se ela está funcionando bem?
 
-1.  **O Stack de Monitoramento: Prometheus & Grafana**
-    *   **Por que é importante?** Para coletar métricas (uso de CPU, memória, etc.) e logs, permitindo que você entenda a saúde da sua aplicação e diagnostique problemas.
+1.  **Monitoramento Kubernetes com Prometheus & Grafana**
+    *   **Por que é importante?** Prometheus coleta métricas e Grafana permite consultá-las e visualizá-las. Logs são uma trilha separada e exigem uma solução própria de coleta e consulta.
     *   **Suas Ferramentas:** **Prometheus** (para coletar métricas) e **Grafana** (para criar painéis e visualizar os dados).
     *   **Sua Missão:**
-        1.  Instale o Prometheus e a Grafana no seu cluster. A forma mais fácil é usando o **Helm**, o gerenciador de pacotes do Kubernetes.
-        2.  Configure o Prometheus para coletar as métricas da sua API.
-        3.  Crie seu primeiro *dashboard* na Grafana para visualizar em tempo real o que está acontecendo com sua aplicação.
+        1.  Siga o [tutorial Kubernetes de Prometheus e Grafana](./kubernetes/observability/prometheus-grafana/tutorial-prometheus-grafana.md), usando Helm.
+        2.  Confira o [guia de monitoramento de aplicações](./kubernetes/observability/prometheus-grafana/tutorial-monitoring-applications.md) e adapte a coleta às métricas da aplicação.
+        3.  Crie um dashboard e pratique consultas e alertas; desligue os componentes quando não estiver estudando para liberar recursos do computador.
 
 ---
 

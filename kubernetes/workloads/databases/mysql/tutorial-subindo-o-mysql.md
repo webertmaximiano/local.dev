@@ -49,7 +49,7 @@ spec:
 **Aplique o manifesto:**
 
 ```bash
-kubectl apply -f mysql/mysql-pvc.yaml
+kubectl apply -f kubernetes/workloads/databases/mysql/mysql-pvc.yaml
 ```
 
 ### 3. Implantação do MySQL (Deployment e Service)
@@ -108,7 +108,7 @@ spec:
 **Aplique o manifesto:**
 
 ```bash
-kubectl apply -f mysql/mysql-deployment.yaml
+kubectl apply -f kubernetes/workloads/databases/mysql/mysql-deployment.yaml
 ```
 
 ### 4. Verificando a Implantação

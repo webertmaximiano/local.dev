@@ -26,9 +26,9 @@ Nesta pasta, temos três arquivos que definem como o Portainer deve ser executad
 Para implantar o Portainer, aplique os arquivos com `kubectl`:
 
 ```bash
-kubectl apply -f /home/webert/www/local.dev/portainer/portainer-pvc.yaml
-kubectl apply -f /home/webert/www/local.dev/portainer/portainer-deployment.yaml
-kubectl apply -f /home/webert/www/local.dev/portainer/portainer-ingressroute.yaml
+kubectl apply -f kubernetes/tools/portainer/portainer-pvc.yaml
+kubectl apply -f kubernetes/tools/portainer/portainer-deployment.yaml
+kubectl apply -f kubernetes/tools/portainer/portainer-ingressroute.yaml
 ```
 
 ## Passo 2: Verificar a Implantação

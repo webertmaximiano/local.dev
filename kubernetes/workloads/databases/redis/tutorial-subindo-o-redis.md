@@ -48,7 +48,7 @@ spec:
 Com seu ambiente Kubernetes em execução, aplique o manifesto para criar os recursos do Redis:
 
 ```bash
-kubectl apply -f redis/redis-deployment.yaml
+kubectl apply -f kubernetes/workloads/databases/redis/redis-deployment.yaml
 ```
 
 ## 3. Verificando a Instalação

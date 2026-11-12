@@ -4,7 +4,7 @@ Este tutorial detalha a instalação e configuração do Prometheus e Grafana no
 
 ## Pré-requisitos
 
-*   **Ambiente Kubernetes:** Docker Desktop com Kubernetes habilitado e em execução.
+*   **Cluster Kubernetes local:** por exemplo, Docker Desktop ou K3s, iniciado e com o contexto correto selecionado.
 *   **Traefik:** Traefik instalado e funcionando como Ingress Controller, com o middleware de autenticação básica (`traefik-dashboard-auth`) já configurado (conforme o tutorial do Traefik).
 *   **Helm 3:** Gerenciador de pacotes para Kubernetes.
 *   **`kubectl`:** Ferramenta de linha de comando para interagir com o cluster Kubernetes.
@@ -37,12 +37,12 @@ helm repo add prometheus-community https://prometheus-community.github.io/helm-c
 helm repo update
 ```
 
-### 3.2. Criar o Arquivo `monitoring/prometheus-values.yaml`
+### 3.2. Criar o Arquivo `kubernetes/observability/prometheus-grafana/prometheus-values.yaml`
 
-Crie o arquivo `/home/webert/local.dev/monitoring/prometheus-values.yaml` com o seguinte conteúdo. Note a seção `ingress` que habilita o acesso externo e aplica o middleware de autenticação.
+Crie o arquivo `kubernetes/observability/prometheus-grafana/prometheus-values.yaml` com o seguinte conteúdo. Note a seção `ingress` que habilita o acesso externo e aplica o middleware de autenticação.
 
 ```yaml
-# monitoring/prometheus-values.yaml
+# kubernetes/observability/prometheus-grafana/prometheus-values.yaml
 
 alertmanager:
   enabled: false
@@ -99,7 +99,7 @@ server:
 ### 3.3. Instalar o Prometheus
 
 ```bash
-helm install prometheus prometheus-community/prometheus -f /home/webert/local.dev/monitoring/prometheus-values.yaml --namespace monitoring-prometheus --create-namespace --wait
+helm install prometheus prometheus-community/prometheus -f kubernetes/observability/prometheus-grafana/prometheus-values.yaml --namespace monitoring-prometheus --create-namespace --wait
 ```
 
 ## 4. Instalação do Grafana
@@ -115,16 +115,23 @@ helm repo update
 
 ### 4.2. Criar um Secret para as Credenciais de Administrador do Grafana
 
+Crie um arquivo temporário com permissão restrita, informe as duas chaves e remova-o depois de criar o Secret. Não versione esse arquivo:
+
 ```bash
-kubectl create secret generic grafana-admin-secret --from-literal=admin-user=admin --from-literal=admin-password=admin -n monitoring-grafana
+secret_file="$(mktemp)"
+chmod 600 "$secret_file"
+${EDITOR:-vi} "$secret_file"
+# Informe no editor: admin-user=admin e admin-password=<sua-senha-local>
+kubectl create secret generic grafana-admin-secret --from-env-file="$secret_file" -n monitoring-grafana
+rm -f "$secret_file"
 ```
 
-### 4.3. Criar o Arquivo `monitoring/grafana-values.yaml`
+### 4.3. Criar o Arquivo `kubernetes/observability/prometheus-grafana/grafana-values.yaml`
 
-Crie o arquivo `/home/webert/local.dev/monitoring/grafana-values.yaml` com o seguinte conteúdo:
+Crie o arquivo `kubernetes/observability/prometheus-grafana/grafana-values.yaml` com o seguinte conteúdo:
 
 ```yaml
-# monitoring/grafana-values.yaml
+# kubernetes/observability/prometheus-grafana/grafana-values.yaml
 
 admin:
   existingSecret: grafana-admin-secret
@@ -161,7 +168,7 @@ service:
 ### 4.4. Instalar o Grafana
 
 ```bash
-helm install grafana grafana/grafana -f /home/webert/local.dev/monitoring/grafana-values.yaml --namespace monitoring-grafana --wait
+helm install grafana grafana/grafana -f kubernetes/observability/prometheus-grafana/grafana-values.yaml --namespace monitoring-grafana --wait
 ```
 
 ## 5. Verificação e Testes
@@ -183,7 +190,7 @@ curl -vk https://prometheus.local.dev
 
 **Com Credenciais (Deve Ter Sucesso):**
 ```bash
-curl -vk --user admin:admin https://prometheus.local.dev
+curl -k --user admin https://prometheus.local.dev
 # Expectativa: HTTP/2 200 OK
 ```
 
@@ -193,7 +200,7 @@ Ao acessar `https://prometheus.local.dev` no navegador, uma janela de login deve
 
 Abra seu navegador e acesse: `https://grafana.local.dev`
 
-Faça login com o usuário `admin` e a senha que você definiu no Secret (`admin` por padrão).
+Faça login com o usuário `admin` e a senha definida ao criar o Secret.
 
 ### 5.4. Verificar Fonte de Dados e Métricas do Traefik no Grafana
 

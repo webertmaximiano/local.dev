@@ -1,17 +1,17 @@
-# Guia: Adicionando Novos Domínios Virtuais ao Traefik no Kubernetes
+# Guia: Adicionando Domínios Virtuais ao Traefik Kubernetes
 
-Este guia detalha como adicionar novos domínios virtuais ao seu ambiente Traefik no Kubernetes, garantindo que o HTTPS funcione corretamente. O processo varia ligeiramente dependendo se o novo domínio já está coberto por um certificado wildcard existente.
+Este guia é exclusivo da trilha Kubernetes. O Traefik do laboratório Swarm tem configuração e certificados próprios em `infra/swarm/`; não compartilhe os Secrets entre os ambientes.
 
 ## Pré-requisitos
 
 *   **mkcert:** Para gerar certificados SSL/TLS locais confiáveis.
 *   **kubectl:** Ferramenta de linha de comando do Kubernetes.
 *   **helm:** Gerenciador de pacotes para Kubernetes.
-*   Acesso ao diretório `/home/webert/local.dev/traefik/certs/`.
+*   Acesso aos arquivos locais em `kubernetes/networking/traefik/certs/`.
 
 ## Cenário 1: O Domínio Virtual Já Está Coberto por um Certificado Wildcard Existente
 
-Este cenário se aplica se você está adicionando um subdomínio de um wildcard que já está incluído no seu certificado principal (ex: `minha-app.local.dev` se você já tem `*.local.dev`, ou `api.estouon.dev` se você já tem `*.estouon.dev`).
+Este cenário se aplica a `*.local.dev`, coberto pelo certificado criado pelo script local. Domínios fora desse padrão precisam de certificado e Secret próprios, conforme o cenário 2.
 
 ### 1. Criar o Manifesto `IngressRoute` para sua Aplicação
 
@@ -53,38 +53,46 @@ Para que seu navegador consiga resolver o novo domínio para o seu ambiente loca
 127.0.0.1 minha-app.local.dev # Substitua pelo seu domínio virtual
 ```
 
-## Cenário 2: O Novo Domínio Virtual NÃO Está Coberto por um Certificado Wildcard Existente
+## Cenário 2: O Domínio Não Está Coberto pelo Certificado Local
 
-Este cenário se aplica se você está adicionando um domínio completamente novo (ex: `meu-novo-dominio.com`) ou um domínio que não é um subdomínio de um wildcard já existente no seu `cert.pem` (ex: `estouon.dev` se você só tinha `*.local.dev`).
+O certificado criado pelo script `setup-mkcert-localdev.sh` cobre `local.dev` e `*.local.dev`. Para um nome fora desse padrão, gere um certificado local adicional e mantenha-o separado. Não concatene certificados e chaves privadas em um único arquivo.
 
-### 1. Gerar os Novos Certificados
+### 1. Gerar um certificado separado
 
-Execute `mkcert` no diretório `/home/webert/local.dev/traefik/certs/` para gerar os certificados para o seu novo domínio e seus subdomínios (se aplicável).
-
-```bash
-cd /home/webert/local.dev/traefik/certs/
-mkcert meu-novo-dominio.com *.meu-novo-dominio.com # Substitua pelo seu novo domínio
-```
-Anote os nomes exatos dos arquivos `.pem` e `-key.pem` gerados (ex: `meu-novo-dominio.com+1.pem` e `meu-novo-dominio.com+1-key.pem`).
-
-### 2. Concatenar os Novos Certificados aos Arquivos Existentes
-
-Adicione o conteúdo dos novos arquivos `.pem` e `-key.pem` aos seus arquivos `cert.pem` e `privkey.pem` existentes.
+Na raiz do repositório, gere o certificado para o nome que será usado no navegador:
 
 ```bash
-cat /home/webert/local.dev/traefik/certs/meu-novo-dominio.com+1.pem >> /home/webert/local.dev/traefik/certs/cert.pem
-cat /home/webert/local.dev/traefik/certs/meu-novo-dominio.com+1-key.pem >> /home/webert/local.dev/traefik/certs/privkey.pem
+mkdir -p kubernetes/networking/traefik/certs/extra
+mkcert \
+  -cert-file kubernetes/networking/traefik/certs/extra/meu-dominio.crt \
+  -key-file kubernetes/networking/traefik/certs/extra/meu-dominio.key \
+  meu-dominio.test '*.meu-dominio.test'
 ```
-Substitua os nomes dos arquivos pelos que foram gerados no passo anterior.
 
-### 3. Recriar o Secret TLS no Kubernetes
+`mkcert -install` precisa ter sido executado neste computador para confiar na autoridade local. O certificado e a chave permanecem ignorados pelo Git.
 
-Agora que os arquivos `cert.pem` e `privkey.pem` estão atualizados, precisamos recriar o secret `local-dev-tls` no Kubernetes para que ele use os novos certificados.
+### 2. Criar um Secret TLS próprio
+
+Use um nome distinto do Secret wildcard `local-dev-tls`:
 
 ```bash
-kubectl delete secret local-dev-tls --ignore-not-found
-kubectl create secret tls local-dev-tls --cert=/home/webert/local.dev/traefik/certs/cert.pem --key=/home/webert/local.dev/traefik/certs/privkey.pem -n default
+kubectl create secret tls meu-dominio-tls \
+  --cert=kubernetes/networking/traefik/certs/extra/meu-dominio.crt \
+  --key=kubernetes/networking/traefik/certs/extra/meu-dominio.key \
+  -n default
 ```
+
+No `IngressRoute`, use `secretName: meu-dominio-tls`. Para atualizar o certificado depois, substitua o Secret com `kubectl create secret tls ... --dry-run=client -o yaml | kubectl apply -f -`.
+
+### 3. Resolver o domínio localmente
+
+Adicione o nome ao `/etc/hosts`, apontando para o endereço local do cluster. Em um cluster local cujo Traefik publica no host, use:
+
+```text
+127.0.0.1 meu-dominio.test
+```
+
+Se o cluster expõe o Traefik por outro endereço, use o IP indicado pelo ambiente Kubernetes.
 
 ### 4. Criar o Manifesto `IngressRoute` para sua Aplicação
 
@@ -101,13 +109,13 @@ spec:
   entryPoints:
     - websecure # Usa o entrypoint HTTPS do Traefik
   routes:
-    - match: Host(`meu-novo-dominio.com`) # Substitua pelo seu novo domínio virtual
+    - match: Host(`meu-dominio.test`) # Substitua pelo seu novo domínio virtual
       kind: Rule
       services:
         - name: meu-app-service # O NOME DO SERVICE KUBERNETES DA SUA APLICAÇÃO
           port: 80 # A PORTA QUE SEU SERVICE KUBERNETES EXPÕE INTERNAMENTE
   tls:
-    secretName: local-dev-tls # Referencia o secret TLS já existente do Traefik
+    secretName: meu-dominio-tls # Secret criado para este domínio
 ```
 
 ### 5. Aplicar o Manifesto no Kubernetes
@@ -123,7 +131,7 @@ kubectl apply -f minha-app-ingressroute.yaml
 Para que seu navegador consiga resolver o novo domínio para o seu ambiente local, adicione a seguinte entrada ao seu arquivo `/etc/hosts`:
 
 ```
-127.0.0.1 meu-novo-dominio.com # Substitua pelo seu novo domínio virtual
+127.0.0.1 meu-dominio.test # Substitua pelo seu novo domínio virtual
 ```
 
 ## Considerações Finais

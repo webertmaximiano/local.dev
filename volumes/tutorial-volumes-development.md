@@ -2,7 +2,7 @@
 
 Este guia apresenta uma solução completa para desenvolver aplicações em um cluster Kubernetes local (via Docker Desktop) no Ubuntu 24.04. O objetivo é resolver problemas comuns de sincronização de arquivos e permissões, estabelecendo um fluxo de trabalho profissional com **hot reload** instantâneo.
 
-Nosso projeto de exemplo é um aplicativo **React + Vite** chamado `hello-world-app`, localizado no diretório `/local.dev/hello-world-app`.
+Nosso projeto de exemplo é um aplicativo **React + Vite** chamado `hello-world-app`, localizado no diretório `/local.dev/kubernetes/workloads/examples/hello-world-app`.
 
 ## 🎯 O Desafio
 
@@ -53,7 +53,7 @@ Com o ambiente estável, podemos focar na aplicação.
 
 ### Etapa 2: Preparando a Aplicação e o `Dockerfile`
 
-Vamos configurar os arquivos necessários dentro do diretório do projeto: `/local.dev/hello-world-app`.
+Vamos configurar os arquivos necessários dentro do diretório do projeto: `/local.dev/kubernetes/workloads/examples/hello-world-app`.
 
 #### Arquivo 1: `Dockerfile.dev`
 
@@ -237,7 +237,7 @@ portForward:
 
 ### 🚀 Executando o Ambiente de Desenvolvimento
 
-Com todos os quatro arquivos configurados na pasta `/local.dev/hello-world-app`, o fluxo de trabalho se resume a um único comando no terminal:
+Com todos os quatro arquivos configurados na pasta `/local.dev/kubernetes/workloads/examples/hello-world-app`, o fluxo de trabalho se resume a um único comando no terminal:
 
 ```bash
 skaffold dev --port-forward --trigger=polling
