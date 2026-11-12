@@ -51,7 +51,7 @@ services:
       - web-local
       - monitoring
     secrets:
-      - traefik_dashboard_users
+      - traefik_dashboard_users_v2
 
     deploy:
       # Configurações para o Docker Swarm gerenciar o serviço.
@@ -105,5 +105,5 @@ networks:
     external: true
 
 secrets:
-  traefik_dashboard_users:
+  traefik_dashboard_users_v2:
     external: true

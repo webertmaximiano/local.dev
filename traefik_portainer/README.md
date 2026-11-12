@@ -59,7 +59,7 @@ docker volume create portainer_data
 Crie o Docker Secret do usuário do dashboard. O comando solicita a senha sem colocá-la em um arquivo do repositório:
 
 ```bash
-htpasswd -nB localadmin | docker secret create traefik_dashboard_users -
+htpasswd -nB localadmin | docker secret create traefik_dashboard_users_v2 -
 ```
 
 O secret do Swarm é lido pelo middleware BasicAuth. Para trocar a credencial, remova e recrie o secret e atualize a stack durante uma janela de manutenção; secrets Swarm são imutáveis.

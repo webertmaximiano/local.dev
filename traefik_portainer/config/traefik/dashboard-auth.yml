@@ -2,5 +2,5 @@ http:
   middlewares:
     dashboard-auth:
       basicAuth:
-        usersFile: /run/secrets/traefik_dashboard_users
+        usersFile: /run/secrets/traefik_dashboard_users_v2
         removeHeader: true
