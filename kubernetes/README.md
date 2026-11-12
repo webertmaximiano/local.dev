@@ -8,7 +8,7 @@ Kubernetes é a trilha avançada deste repositório. O percurso padrão para des
 2. **Workloads:** estude Pods como unidade básica e use Deployments para aplicações stateless; avance para StatefulSets e Jobs conforme o tipo de carga. Os exemplos ficam em [`workloads/`](workloads/).
 3. **Rede de entrada:** configure Services, Ingress e Traefik em [`networking/traefik/`](networking/traefik/).
 4. **Dados e estado:** pratique PVCs e os exemplos de MySQL, PostgreSQL e Redis em [`workloads/databases/`](workloads/databases/).
-5. **Observabilidade:** configure Prometheus e Grafana em [`observability/prometheus-grafana/`](observability/prometheus-grafana/).
+5. **Observabilidade (opcional):** pratique métricas de tráfego com Prometheus e Grafana em [`observability/prometheus-grafana/`](observability/prometheus-grafana/). O laboratório usa retenção curta e armazenamento efêmero para poupar recursos; não inclui agregação de logs nem notificações de alertas.
 6. **Ferramentas de gestão:** veja o exemplo de Portainer em [`tools/portainer/`](tools/portainer/).
 
 ## Kubernetes depois do Swarm

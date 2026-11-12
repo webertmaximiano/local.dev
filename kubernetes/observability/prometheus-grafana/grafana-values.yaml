@@ -31,3 +31,6 @@ ingress:
 # Configura o Service para o Grafana
 service:
   type: ClusterIP
+
+persistence:
+  enabled: false

@@ -10,6 +10,9 @@ ports:
   metrics:
     port: 9100
     exposedPort: 9100
+    # Métricas acessíveis dentro do cluster, não pelo LoadBalancer.
+    expose:
+      default: false
   traefik:
     port: 8080
     exposedPort: 8080

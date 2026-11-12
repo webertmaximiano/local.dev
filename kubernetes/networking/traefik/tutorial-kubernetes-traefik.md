@@ -53,6 +53,9 @@ ports:
   metrics:
     port: 9100
     exposedPort: 9100
+    # Prometheus descobre o endpoint dentro do cluster; não publicamos métricas no LoadBalancer.
+    expose:
+      default: false
   traefik:
     port: 8080
     exposedPort: 8080

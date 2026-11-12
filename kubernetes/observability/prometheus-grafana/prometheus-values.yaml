@@ -3,7 +3,7 @@
 alertmanager:
   enabled: false
 
-kubeStateMetrics:
+kube-state-metrics:
   enabled: false
 
 prometheus-node-exporter:
@@ -12,7 +12,51 @@ prometheus-node-exporter:
 prometheus-pushgateway:
   enabled: false
 
+extraScrapeConfigs: |
+  - job_name: traefik
+    metrics_path: /metrics
+    scheme: http
+    kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names: [default]
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+        action: keep
+        regex: traefik
+      - source_labels: [__meta_kubernetes_pod_container_port_name]
+        action: keep
+        regex: metrics
+
 server:
+  # Laboratório local: pouco histórico e sem PVC persistente.
+  retention: 24h
+  retentionSize: 512MB
+  persistentVolume:
+    enabled: false
+
+  # Limita a coleta padrão do chart ao próprio Prometheus.
+  # O Traefik é adicionado separadamente em extraScrapeConfigs, abaixo.
+  scrapeConfigs:
+    kubernetes-api-servers:
+      enabled: false
+    kubernetes-nodes:
+      enabled: false
+    kubernetes-nodes-cadvisor:
+      enabled: false
+    kubernetes-service-endpoints:
+      enabled: false
+    kubernetes-service-endpoints-slow:
+      enabled: false
+    kubernetes-services:
+      enabled: false
+    kubernetes-pods:
+      enabled: false
+    kubernetes-pods-slow:
+      enabled: false
+    prometheus-pushgateway:
+      enabled: false
+
   ingress:
     enabled: true
     ingressClassName: traefik
@@ -26,26 +70,3 @@ server:
       traefik.ingress.kubernetes.io/router.entrypoints: websecure
       traefik.ingress.kubernetes.io/router.tls: "true"
       traefik.ingress.kubernetes.io/router.middlewares: default-traefik-dashboard-auth@kubernetescrd
-
-
-  # Scrape explícito via descoberta Kubernetes para o Traefik
-  extraScrapeConfigs: |
-    - job_name: 'traefik'
-      metrics_path: /metrics
-      scheme: http
-      kubernetes_sd_configs:
-        - role: pod
-          namespaces:
-            names: ['default'] # Namespace onde o Traefik está rodando
-      relabel_configs:
-        - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
-          action: keep
-          regex: traefik
-        - source_labels: [__meta_kubernetes_pod_container_port_name]
-          action: keep
-          regex: metrics # Nome da porta de métricas no pod do Traefik
-        - source_labels: [__address__]
-          action: replace
-          regex: ([^:]+):\d+
-          replacement: $1:9100 # Substitui a porta pelo 9100
-          target_label: __address__
