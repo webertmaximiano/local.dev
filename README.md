@@ -4,7 +4,7 @@ Este repositório ensina desenvolvimento e operação de aplicações em contêi
 
 ## Caminho recomendado: Docker Swarm local
 
-O laboratório principal está em [`infra/swarm/`](./infra/swarm/). Ele oferece um Traefik central e stacks opcionais, controladas por comandos explícitos na raiz: `make traefik-up`, `make portainer-up` e seus alvos `down`. Veja [`make help`](./Makefile) e o [guia do laboratório](./infra/swarm/README.md).
+O laboratório principal está em [`infra/swarm/`](./infra/swarm/). Ele oferece um Traefik central e stacks opcionais, controladas por comandos explícitos na raiz: `make traefik-up`, `make portainer-up`, `make monitoring-up` e seus alvos `down`. Veja [`make help`](./Makefile) e o [guia do laboratório](./infra/swarm/README.md).
 
 Uma VPS pequena pode começar com um nó Swarm. O Swarm também suporta vários nós e réplicas distribuídas. Um Swarm local de um nó ajuda a aprender o fluxo, mas não simula disponibilidade entre máquinas.
 

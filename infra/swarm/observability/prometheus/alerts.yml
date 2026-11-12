@@ -1,0 +1,25 @@
+groups:
+  - name: swarm-local
+    rules:
+      - alert: TraefikMetricsTargetDown
+        expr: absent(up{job="traefik"}) or up{job="traefik"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: Prometheus não consegue coletar métricas do Traefik
+          description: Confira a rede monitoring, a descoberta DNS das tasks e os logs do serviço Traefik.
+
+      - alert: TraefikHigh5xxRate
+        expr: |
+          (
+            sum by (entrypoint) (rate(traefik_entrypoint_requests_total{code=~"5.."}[5m]))
+            /
+            clamp_min(sum by (entrypoint) (rate(traefik_entrypoint_requests_total[5m])), 0.000001)
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Taxa de respostas HTTP 5xx acima de 5%
+          description: O entrypoint {{ $labels.entrypoint }} manteve taxa 5xx acima do limite por cinco minutos.

@@ -48,5 +48,7 @@ No Swarm, Traefik lê labels do serviço em `deploy.labels`, e a porta interna d
 
 - O dashboard usa BasicAuth e Docker Secret. O usuário padrão criado pelo laboratório é `admin`; a senha é definida no terminal. O popup do navegador não troca a credencial no servidor: para trocar a senha ou se você não lembra a atual, execute `make traefik-secret-rotate` na raiz. O comando solicita a nova senha sem exibi-la, cria a próxima versão do Secret e reaplica somente o Traefik. Confirme o login e o serviço saudável antes de remover manualmente o Secret antigo com `docker secret rm NOME_ANTIGO`. Nunca remova a versão antiga antes da validação.
 - O socket Docker continua sendo acesso privilegiado ao daemon mesmo montado `:ro`.
+- As métricas Prometheus escutam somente na porta interna 8082 e na rede overlay `monitoring`; não publique essa porta no host.
+- Logs do Traefik vão para stdout/stderr e o driver local limita cada serviço a três arquivos de 10 MB. Use `make logs-traefik` para acompanhar eventos recentes.
 - Swarm de um nó não distribui carga para outro computador nem oferece alta disponibilidade.
 - Esta configuração é para desenvolvimento; não a exponha à Internet.

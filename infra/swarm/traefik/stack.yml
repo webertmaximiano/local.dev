@@ -41,6 +41,11 @@ services:
       - "./config/traefik:/etc/traefik/conf:ro"
       # Certificado local gerado com mkcert.
       - "./certs/local.dev:/certs:ro"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     # healthcheck removed temporarily: some images may não incluir 'curl',
     # o que pode marcar o container como 'unhealthy' indevidamente.
     # Reintroduza com um comando presente na imagem ou usando sidecar.
@@ -90,11 +95,6 @@ services:
         # Removemos o sufixo '@docker' do rate-limit.
         - "traefik.http.routers.traefik-dashboard.middlewares=dashboard-auth@file,rate-limit@swarm"
         
-        # --- Labels do Prometheus (sem alterações) ---
-        - "prometheus.scrape=true"
-        - "prometheus.job=traefik"
-        - "prometheus.port=8082"
-        - "prometheus.path=/metrics"
 # Declaração das redes que já existem no Swarm (criadas manualmente).
 networks:
   web-local:

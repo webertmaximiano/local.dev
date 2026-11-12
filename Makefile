@@ -5,9 +5,11 @@ SHELL := /bin/bash
 
 TRAEFIK_DIR := infra/swarm/traefik
 PORTAINER_DIR := infra/swarm/portainer
+MONITORING_DIR := infra/swarm/observability
 TRAEFIK_SECRET_PREFIX := traefik_dashboard_users_v
+GRAFANA_SECRET_PREFIX := grafana_admin_password_v
 
-.PHONY: help swarm-init networks portainer-network portainer-volume tls-setup check-tls traefik-secret traefik-secret-rotate ensure-traefik traefik-up traefik-down portainer-up portainer-down status logs-traefik
+.PHONY: help swarm-init networks portainer-network portainer-volume tls-setup check-tls traefik-secret traefik-secret-rotate ensure-traefik traefik-up traefik-down portainer-up portainer-down monitoring-secret monitoring-secret-rotate monitoring-up monitoring-down status logs-traefik logs-prometheus logs-grafana
 
 help:
 	@echo "Targets do ambiente local (não iniciam projetos de aplicação):"
@@ -16,9 +18,14 @@ help:
 	@echo "  make traefik-up     Sobe/reaplica somente a stack central do Traefik"
 	@echo "  make portainer-up   Verifica o Traefik e sobe Portainer + Agent (opcional)"
 	@echo "  make portainer-down Para somente Portainer + Agent"
+	@echo "  make monitoring-up  Verifica o Traefik e sobe Prometheus + Grafana (opcional)"
+	@echo "  make monitoring-down Para somente Prometheus + Grafana"
+	@echo "  make monitoring-secret-rotate Atualiza o Secret após trocar a senha na UI Grafana"
 	@echo "  make traefik-down   Para somente o Traefik central"
 	@echo "  make status         Lista stacks e serviços Swarm"
 	@echo "  make logs-traefik   Acompanha os logs do Traefik"
+	@echo "  make logs-prometheus Acompanha os logs do Prometheus"
+	@echo "  make logs-grafana   Acompanha os logs do Grafana"
 
 swarm-init:
 	@state="$$(docker info --format '{{.Swarm.LocalNodeState}}')"; \
@@ -116,9 +123,49 @@ portainer-up: ensure-traefik portainer-network portainer-volume
 portainer-down:
 	@docker stack rm portainer
 
+# Cria a credencial inicial sem eco, histórico de shell ou argumento de processo.
+monitoring-secret:
+	@if ! docker secret ls --format '{{.Name}}' | grep -E '^$(GRAFANA_SECRET_PREFIX)[0-9]+$$' | grep -q .; then \
+		read -r -s -p "Senha inicial do administrador Grafana: " password; echo; \
+		read -r -s -p "Confirme a senha: " confirmation; echo; \
+		[[ -n "$$password" ]] || { echo "A senha não pode ser vazia." >&2; exit 1; }; \
+		[[ "$$password" == "$$confirmation" ]] || { echo "As senhas não coincidem." >&2; exit 1; }; \
+		printf '%s' "$$password" | docker secret create $(GRAFANA_SECRET_PREFIX)1 - >/dev/null; \
+		unset password confirmation; \
+	else \
+		echo "Docker Secret Grafana já existe."; \
+	fi
+
+monitoring-up: ensure-traefik monitoring-secret
+	@secret="$$(docker secret ls --format '{{.Name}}' | grep -E '^$(GRAFANA_SECRET_PREFIX)[0-9]+$$' | sort -V | tail -1)"; \
+	cd $(MONITORING_DIR) && GRAFANA_SECRET="$$secret" docker stack deploy -c stack.yml observability
+
+monitoring-down:
+	@docker stack rm observability
+
+# Troque primeiro a senha na UI do Grafana; este alvo sincroniza o Secret de recuperação.
+monitoring-secret-rotate: ensure-traefik
+	@docker service ls --filter name=observability_grafana --format '{{.Name}}' | grep -Fxq observability_grafana || { echo "Suba primeiro a stack com make monitoring-up." >&2; exit 1; }
+	@current="$$(docker secret ls --format '{{.Name}}' | grep -E '^$(GRAFANA_SECRET_PREFIX)[0-9]+$$' | sed 's/^$(GRAFANA_SECRET_PREFIX)//' | sort -n | tail -1)"; \
+		next=$$(( $${current:-0} + 1 )); \
+		read -r -s -p "Informe a senha já definida na UI do Grafana: " password; echo; \
+		read -r -s -p "Confirme a senha: " confirmation; echo; \
+		[[ -n "$$password" ]] || { echo "A senha não pode ser vazia." >&2; exit 1; }; \
+		[[ "$$password" == "$$confirmation" ]] || { echo "As senhas não coincidem." >&2; exit 1; }; \
+		printf '%s' "$$password" | docker secret create $(GRAFANA_SECRET_PREFIX)$$next - >/dev/null; \
+		unset password confirmation; \
+		secret="$(GRAFANA_SECRET_PREFIX)$$next"; \
+		cd $(MONITORING_DIR) && GRAFANA_SECRET="$$secret" docker stack deploy -c stack.yml observability
+
 status:
 	@docker stack ls
 	@docker service ls
 
 logs-traefik:
 	@docker service logs --follow traefik_traefik
+
+logs-prometheus:
+	@docker service logs --follow observability_prometheus
+
+logs-grafana:
+	@docker service logs --follow observability_grafana

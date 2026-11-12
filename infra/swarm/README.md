@@ -6,7 +6,8 @@ Este ambiente é genérico para estudo e desenvolvimento; não contém comandos 
 
 - **Traefik:** stack base, única dona das portas 80/443.
 - **Portainer + Agent:** opcional; ligue apenas para praticar a interface de gerenciamento.
-- **Bancos e monitoramento:** ainda não há stacks implementadas nesta trilha. Quando forem adicionadas, terão diretórios e comandos próprios; os exemplos Kubernetes ficam em `kubernetes/`.
+- **Monitoramento:** Prometheus e Grafana estão disponíveis como stack opcional em [`observability/`](observability/). Ela não inicia junto com o Traefik e pode ser desligada quando não estiver em uso.
+- **Bancos:** ainda não há stack de banco implementada nesta trilha; os exemplos Kubernetes ficam em `kubernetes/`.
 
 Cada stack tem diretório e ciclo de vida próprios. O Makefile não inicia tudo de uma vez nem para containers de outros projetos.
 
@@ -29,6 +30,8 @@ O alvo `tls-setup` instala a CA local no trust store usando mkcert e gera um wil
 127.0.0.1 traefik.local.dev
 127.0.0.1 portainer.local.dev
 127.0.0.1 whoami.local.dev
+127.0.0.1 prometheus.local.dev
+127.0.0.1 grafana.local.dev
 ```
 
 Inicie somente o proxy central:
@@ -47,6 +50,8 @@ make portainer-up
 
 Consulte o [guia de Portainer](portainer/README.md) para aprender quando usar a interface, exercícios de inspeção e os cuidados de segurança. Para desligá-lo sem apagar os dados persistidos, use `make portainer-down`; o Traefik continua ativo. `make traefik-down` para o proxy e interrompe as rotas locais. Esses alvos removem apenas serviços das stacks: não apagam volumes Docker nem os certificados locais. O volume externo `portainer_data` continua disponível quando Portainer estiver desligado.
 
+Prometheus e Grafana também são opcionais. `make monitoring-up` verifica e inicia o Traefik se necessário, solicita a senha inicial do Grafana e sobe somente a stack `observability`. Para parar apenas o monitoramento, use `make monitoring-down`; os dados persistidos continuam nos volumes. Veja o [tutorial de monitoramento](observability/README.md) para consultas, labels, alertas, logs e cuidados com dados locais.
+
 ## Aplicações de exemplo
 
 Esta trilha usa o provider Swarm do Traefik. Portanto, os exemplos roteados devem ser serviços Swarm, conectados à rede externa `web-local`, com labels em `deploy.labels` e porta interna declarada. Consulte [`traefik/README.md`](traefik/README.md).
@@ -59,6 +64,7 @@ Um Swarm de nó único ensina `docker stack deploy`, `docker service scale`, lab
 make status
 make logs-traefik
 make portainer-down
+make monitoring-down
 make traefik-down
 ```
 
