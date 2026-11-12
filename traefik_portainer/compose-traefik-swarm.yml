@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   traefik:
-    image: traefik:v3.6.7
+    image: traefik:v3.7.18
     environment:
       - TZ=America/Sao_Paulo
     ports:
@@ -10,11 +10,10 @@ services:
       - "80:80"
       - "443:443"
       
-      # A porta 8082 é para expor as métricas para o Prometheus.
-      - "8082:8082"
     command:
       # --- Configuração Estática Simplificada ---
       - --api.dashboard=true
+      - --api.insecure=false
       # Provedores (Swarm para serviços, File para nossa config de TLS)
       - --providers.swarm=true
       - --providers.swarm.network=web-local
@@ -23,21 +22,7 @@ services:
       - --providers.file.watch=true
       # Pontos de Entrada
       - --entrypoints.web.address=:80
-      - --entrypoints.web.http.encodedCharacters.allowEncodedSlash=true
-      - --entrypoints.web.http.encodedCharacters.allowEncodedBackSlash=true
-      - --entrypoints.web.http.encodedCharacters.allowEncodedNullCharacter=true
-      - --entrypoints.web.http.encodedCharacters.allowEncodedSemicolon=true
-      - --entrypoints.web.http.encodedCharacters.allowEncodedPercent=true
-      - --entrypoints.web.http.encodedCharacters.allowEncodedQuestionMark=true
-      - --entrypoints.web.http.encodedCharacters.allowEncodedHash=true
       - --entrypoints.websecure.address=:443
-      - --entrypoints.websecure.http.encodedCharacters.allowEncodedSlash=true
-      - --entrypoints.websecure.http.encodedCharacters.allowEncodedBackSlash=true
-      - --entrypoints.websecure.http.encodedCharacters.allowEncodedNullCharacter=true
-      - --entrypoints.websecure.http.encodedCharacters.allowEncodedSemicolon=true
-      - --entrypoints.websecure.http.encodedCharacters.allowEncodedPercent=true
-      - --entrypoints.websecure.http.encodedCharacters.allowEncodedQuestionMark=true
-      - --entrypoints.websecure.http.encodedCharacters.allowEncodedHash=true
       - --entrypoints.metrics.address=:8082
       # Redirecionamento Global HTTP -> HTTPS
       - --entrypoints.web.http.redirections.entrypoint.to=websecure
@@ -58,16 +43,15 @@ services:
       - "./config/traefik:/etc/traefik/conf:ro"
       # Mapeia uma pasta para certificados SSL customizados (Gerado na Cloudflare).
       - "./certs/local.dev:/certs:ro"
-      # Mapeia o volume externo para guardar os logs de acesso.
-      - "traefik_logs:/var/log/traefik"
     # healthcheck removed temporarily: some images may não incluir 'curl',
     # o que pode marcar o container como 'unhealthy' indevidamente.
     # Reintroduza com um comando presente na imagem ou usando sidecar.
       
     networks:
-      # Conecta o Traefik à rede pública (para receber tráfego externo) e à de monitoramento.
       - web-local
       - monitoring
+    secrets:
+      - traefik_dashboard_users
 
     deploy:
       # Configurações para o Docker Swarm gerenciar o serviço.
@@ -106,7 +90,7 @@ services:
         # --- CORREÇÃO SECUNDÁRIA: Aplicação dos Middlewares ---
         # Ao aplicar middlewares definidos nas labels do mesmo serviço, apenas listamos seus nomes.
         # Removemos o sufixo '@docker' do rate-limit.
-        - "traefik.http.routers.traefik-dashboard.middlewares=rate-limit"
+        - "traefik.http.routers.traefik-dashboard.middlewares=dashboard-auth@file,rate-limit@swarm"
         
         # --- Labels do Prometheus (sem alterações) ---
         - "prometheus.scrape=true"
@@ -120,7 +104,6 @@ networks:
   monitoring:
     external: true
 
-# Declaração dos volumes que já existem no Swarm (criados manualmente).
-volumes:
-  traefik_logs:
+secrets:
+  traefik_dashboard_users:
     external: true
