@@ -41,10 +41,18 @@ hello-world-app/skaffold
 /certs/*
 *.key
 *.key.pem
+*.pem
 *.p12
 *.pfx
 *.jks
 *.keystore
+.envrc
+.secrets/
+**/.secrets/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
 
 # Kubernetes Secret manifests containing values; use a secret manager or CLI
 *-secret.yaml
