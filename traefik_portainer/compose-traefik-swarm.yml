@@ -33,15 +33,13 @@ services:
       # Logs
       - --log.level=WARN
       - --accesslog=true
-      # IPs Confiáveis do Cloudflare (ainda importante para logs corretos!)
-      #- "--entrypoints.websecure.forwardedheaders.trustedips=173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/13,104.24.0.0/14,172.64.0.0/13,131.0.72.0/22"
       
     volumes:
       # Permite que o Traefik escute os eventos do Docker para configurar rotas.
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       # Mapeia a nossa pasta de configurações dinâmicas para dentro do contêiner.
       - "./config/traefik:/etc/traefik/conf:ro"
-      # Mapeia uma pasta para certificados SSL customizados (Gerado na Cloudflare).
+      # Certificado local gerado com mkcert.
       - "./certs/local.dev:/certs:ro"
     # healthcheck removed temporarily: some images may não incluir 'curl',
     # o que pode marcar o container como 'unhealthy' indevidamente.
@@ -70,7 +68,7 @@ services:
         # Mesmo que a gente ache que é óbvio, para o provedor Swarm, é bom ser explícito.
         - "traefik.swarm.network=web-local"
 
-        # --- Roteador para o Dashboard - usando certificado de origem cloudflare ---
+        # --- Rota HTTPS local do dashboard ---
         - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.local.dev`)"
         - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
         - "traefik.http.routers.traefik-dashboard.tls=true"

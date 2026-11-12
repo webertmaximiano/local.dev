@@ -14,6 +14,8 @@ Padronize os endereços como `servico.local.dev`: `traefik.local.dev`, `portaine
 127.0.0.1 meuprojeto.local.dev
 ```
 
+No Linux, edite `/etc/hosts` com `sudoedit /etc/hosts` e confirme a resolução com `getent hosts traefik.local.dev`. Repita a entrada para cada novo projeto, ou configure um DNS local wildcard.
+
 Instale `mkcert` conforme as instruções para seu sistema operacional na [documentação oficial](https://github.com/FiloSottile/mkcert), depois instale a CA local uma vez por computador. A CA deve ser confiável pelo sistema e pelo navegador que você usa:
 
 ```bash
@@ -24,13 +26,13 @@ mkcert -cert-file traefik_portainer/certs/local.dev/local.dev.fullchain.crt \
   "*.local.dev" local.dev
 ```
 
-Os certificados e chaves ficam ignorados pelo Git. Gere-os em cada máquina. Nunca versione nem compartilhe a chave privada da CA do `mkcert`.
+O nome `local.dev.fullchain.crt` foi mantido por compatibilidade histórica. O arquivo gerado pelo `mkcert` contém o certificado do host (neste ambiente, um bloco PEM); a CA raiz é confiada separadamente por `mkcert -install`, então não concatene nem versione a chave da CA. Os certificados e chaves ficam ignorados pelo Git. Gere-os em cada máquina. Nunca versione nem compartilhe a chave privada da CA do `mkcert`.
 
 ## Requisitos e portas
 
 - Docker Engine com Swarm habilitado em um manager local.
 - Portas `80` e `443` livres. Esta stack é o proxy central e deve ser a única instância local do Traefik que publica essas portas.
-- `htpasswd` (`apache2-utils` no Debian/Ubuntu) para criar a credencial do dashboard.
+- `htpasswd` (`apache2-utils` no Debian/Ubuntu) para criar a credencial do dashboard. No Debian/Ubuntu, instale com `sudo apt install apache2-utils`.
 
 Confira antes de iniciar. Se já existir um Traefik usando as portas, reaproveite essa instância e atualize a stack; não inicie outra em paralelo.
 
@@ -62,7 +64,7 @@ Crie o Docker Secret do usuário do dashboard. O comando solicita a senha sem co
 htpasswd -nB localadmin | docker secret create traefik_dashboard_users_v2 -
 ```
 
-O secret do Swarm é lido pelo middleware BasicAuth. Para trocar a credencial, remova e recrie o secret e atualize a stack durante uma janela de manutenção; secrets Swarm são imutáveis.
+O secret do Swarm é lido pelo middleware BasicAuth. Secrets são imutáveis e não podem ser removidos enquanto um serviço os referencia. Para rotacionar `traefik_dashboard_users_v2`, crie um secret com novo nome (por exemplo, `traefik_dashboard_users_v3`), atualize esse nome em `compose-traefik-swarm.yml` e o caminho `usersFile` em `config/traefik/dashboard-auth.yml`, faça o deploy e confirme a autenticação. Remova o secret antigo somente depois que o serviço estiver usando o novo.
 
 ## Subir as stacks
 
