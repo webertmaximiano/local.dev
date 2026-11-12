@@ -5,14 +5,15 @@ SHELL := /bin/bash
 
 TRAEFIK_DIR := infra/swarm/traefik
 PORTAINER_DIR := infra/swarm/portainer
-TRAEFIK_SECRET := traefik_dashboard_users_v2
+TRAEFIK_SECRET_PREFIX := traefik_dashboard_users_v
 
-.PHONY: help swarm-init networks portainer-network portainer-volume tls-setup check-tls traefik-secret ensure-traefik up traefik-up traefik-down portainer-up portainer-down status logs-traefik
+.PHONY: help swarm-init networks portainer-network portainer-volume tls-setup check-tls traefik-secret traefik-secret-rotate ensure-traefik traefik-up traefik-down portainer-up portainer-down status logs-traefik
 
 help:
 	@echo "Targets do ambiente local (não iniciam projetos de aplicação):"
 	@echo "  make tls-setup      Instala a CA local e gera o certificado wildcard"
-	@echo "  make up             Sobe apenas a stack central do Traefik"
+	@echo "  make traefik-secret-rotate Troca a senha BasicAuth do dashboard Traefik"
+	@echo "  make traefik-up     Sobe/reaplica somente a stack central do Traefik"
 	@echo "  make portainer-up   Verifica o Traefik e sobe Portainer + Agent (opcional)"
 	@echo "  make portainer-down Para somente Portainer + Agent"
 	@echo "  make traefik-down   Para somente o Traefik central"
@@ -74,17 +75,26 @@ check-tls:
 	@test -s $(TRAEFIK_DIR)/certs/local.dev/local.dev.fullchain.crt -a -s $(TRAEFIK_DIR)/certs/local.dev/local.dev.key || { echo "Execute make tls-setup antes de subir o Traefik." >&2; exit 1; }
 
 traefik-secret: swarm-init
-	@if ! docker secret ls --format '{{.Name}}' | grep -Fxq $(TRAEFIK_SECRET); then \
+	@if ! docker secret ls --format '{{.Name}}' | grep -E '^$(TRAEFIK_SECRET_PREFIX)[0-9]+$$' | grep -q .; then \
 		command -v htpasswd >/dev/null || { echo "Instale apache2-utils para obter htpasswd." >&2; exit 1; }; \
-		htpasswd -nB localadmin | docker secret create $(TRAEFIK_SECRET) -; \
+		htpasswd -nB admin | docker secret create $(TRAEFIK_SECRET_PREFIX)1 -; \
 	else \
-		echo "Docker Secret $(TRAEFIK_SECRET) já existe."; \
+		echo "Docker Secret BasicAuth já existe; para trocar a senha use make traefik-secret-rotate."; \
 	fi
 
-up: traefik-up
+# Solicita a senha sem eco, cria nova versão e reaplica somente a stack do Traefik.
+traefik-secret-rotate: networks check-tls
+	@command -v htpasswd >/dev/null || { echo "Instale apache2-utils para obter htpasswd." >&2; exit 1; }
+	@current="$$(docker secret ls --format '{{.Name}}' | grep -E '^$(TRAEFIK_SECRET_PREFIX)[0-9]+$$' | sed 's/^$(TRAEFIK_SECRET_PREFIX)//' | sort -n | tail -1)"; \
+	next=$$(( $${current:-0} + 1 )); \
+	secret="$(TRAEFIK_SECRET_PREFIX)$$next"; \
+	echo "Criando nova credencial BasicAuth para admin."; \
+	htpasswd -nB admin | docker secret create "$$secret" -; \
+	cd $(TRAEFIK_DIR) && TRAEFIK_SECRET="$$secret" docker stack deploy -c stack.yml traefik
 
 traefik-up: networks check-tls traefik-secret
-	@cd $(TRAEFIK_DIR) && docker stack deploy -c stack.yml traefik
+	@secret="$$(docker secret ls --format '{{.Name}}' | grep -E '^$(TRAEFIK_SECRET_PREFIX)[0-9]+$$' | sort -V | tail -1)"; \
+	cd $(TRAEFIK_DIR) && TRAEFIK_SECRET="$$secret" docker stack deploy -c stack.yml traefik
 
 # Para dependências opcionais: preserva o Traefik se o serviço já está saudável.
 ensure-traefik: networks check-tls traefik-secret
@@ -93,7 +103,8 @@ ensure-traefik: networks check-tls traefik-secret
 		echo "Traefik já está saudável (1/1); mantendo a stack atual."; \
 	else \
 		echo "Traefik ausente ou não saudável; iniciando/reaplicando a stack."; \
-		cd $(TRAEFIK_DIR) && docker stack deploy -c stack.yml traefik; \
+		secret="$$(docker secret ls --format '{{.Name}}' | grep -E '^$(TRAEFIK_SECRET_PREFIX)[0-9]+$$' | sort -V | tail -1)"; \
+		cd $(TRAEFIK_DIR) && TRAEFIK_SECRET="$$secret" docker stack deploy -c stack.yml traefik; \
 	fi
 
 traefik-down:

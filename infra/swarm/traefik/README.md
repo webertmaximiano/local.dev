@@ -11,7 +11,7 @@ Na raiz do repositório, `make tls-setup` instala a CA local com mkcert e gera o
 ## Subir o Traefik
 
 ```bash
-make up
+make traefik-up
 ```
 
 O Makefile inicializa o Swarm se necessário, cria as redes externas `web-local` e `monitoring`, cria o Docker Secret `traefik_dashboard_users_v2` se ainda não existir e faz deploy da stack. `htpasswd` solicita a senha sem salvá-la no repositório.
@@ -46,7 +46,7 @@ No Swarm, Traefik lê labels do serviço em `deploy.labels`, e a porta interna d
 
 ## Segurança e limites
 
-- O dashboard usa BasicAuth e Docker Secret. Secrets são imutáveis; para trocar a senha, crie uma nova versão, atualize a stack e valide o serviço antes de remover a antiga.
+- O dashboard usa BasicAuth e Docker Secret. O usuário padrão criado pelo laboratório é `admin`; a senha é definida no terminal. O popup do navegador não troca a credencial no servidor: para trocar a senha ou se você não lembra a atual, execute `make traefik-secret-rotate` na raiz. O comando solicita a nova senha sem exibi-la, cria a próxima versão do Secret e reaplica somente o Traefik. Confirme o login e o serviço saudável antes de remover manualmente o Secret antigo com `docker secret rm NOME_ANTIGO`. Nunca remova a versão antiga antes da validação.
 - O socket Docker continua sendo acesso privilegiado ao daemon mesmo montado `:ro`.
 - Swarm de um nó não distribui carga para outro computador nem oferece alta disponibilidade.
 - Esta configuração é para desenvolvimento; não a exponha à Internet.

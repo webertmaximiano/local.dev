@@ -36,7 +36,7 @@ Este repositório está organizado da seguinte forma:
 * **`/ci-cd-automation`**: Tutoriais e exemplos para CI/CD e GitOps.
 
 **Ambiente local Docker Swarm / Portainer**
-* **`/infra/swarm`**: laboratório genérico com Traefik central, Portainer opcional e stacks separadas, operadas pelo Makefile da raiz.
+* **`/infra/swarm`**: laboratório genérico com Traefik central, Portainer opcional e stacks separadas, operadas pelo Makefile da raiz. O [guia do Portainer](./infra/swarm/portainer/README.md) explica quando usar a interface e como desligá-la para poupar recursos.
 * Use uma única instância local do Traefik nas portas 80/443. Não inicie os caminhos Swarm e Kubernetes ao mesmo tempo nas mesmas portas.
 * **`/traefik`** e **`/kubernetes`**: trilha separada para estudar Traefik como Ingress Controller Kubernetes.
 
@@ -67,7 +67,7 @@ Para uma experiência guiada, siga os tutoriais passo a passo que preparamos:
 *   **[Guia de Comandos Essenciais do `kubectl`](./kubernetes/kubectl-cheatsheet.md):** Um guia de referência rápida com os comandos mais importantes para o dia a dia com Kubernetes.
 *   **[Tutorial de Traefik com Kubernetes](./traefik/tutorial-kubernetes-traefik.md):** Comece por aqui para configurar o Ingress Controller, que irá expor seus serviços.
 *   **[Guia: Adicionando Novos Domínios Virtuais ao Traefik no Kubernetes](./traefik/tutorial-virtual-domains.md):** Aprenda a configurar domínios personalizados para suas aplicações.
-*   **[Ambiente local Traefik + Portainer](./infra/swarm/README.md):** Suba o proxy central com `make up`; Portainer e futuros serviços ficam em alvos opcionais.
+*   **[Ambiente local Traefik + Portainer](./infra/swarm/README.md):** Suba o proxy central com `make traefik-up`; Portainer e futuros serviços ficam em alvos opcionais.
 *   **[Tutorial de Prometheus e Grafana](./monitoring/tutorial-prometheus-grafana.md):** Aprenda a observar a saúde e o desempenho das suas aplicações.
 
 ## 🚀 Como Começar
@@ -89,7 +89,7 @@ Siga [`infra/swarm/README.md`](./infra/swarm/README.md). Confira as portas antes
 Isso inclui:
 * geração de certificados `mkcert`
 * criação de redes overlay Swarm
-* deploy das stacks `make up` e `make portainer-up`
+* deploy das stacks `make traefik-up` e `make portainer-up`
 
 ### 2. Ambiente Kubernetes (Local)
 

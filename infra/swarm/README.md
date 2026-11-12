@@ -16,7 +16,7 @@ Docker Engine com Swarm, GNU Make, `mkcert` e `htpasswd` (`apache2-utils` no Deb
 
 ## Preparar e iniciar
 
-Na raiz do repositório:
+Execute os comandos sempre na raiz deste repositório. Os manifests vivem nas pastas de cada stack, mas o Makefile central controla o ciclo de vida:
 
 ```bash
 make help
@@ -34,10 +34,10 @@ O alvo `tls-setup` instala a CA local no trust store usando mkcert e gera um wil
 Inicie somente o proxy central:
 
 ```bash
-make up
+make traefik-up
 ```
 
-Na primeira execução, o Makefile inicializa o Swarm se necessário, cria a rede `web-local` (overlay attachable) e garante a rede overlay `monitoring`, solicita a credencial BasicAuth do dashboard e publica a stack Traefik. Acesse `https://traefik.local.dev`.
+Na primeira execução, o Makefile inicializa o Swarm se necessário, cria a rede `web-local` (overlay attachable) e garante a rede overlay `monitoring`, solicita a credencial BasicAuth do dashboard e publica a stack Traefik. O login do dashboard é independente do Portainer; para trocar a senha BasicAuth, use `make traefik-secret-rotate`. Acesse `https://traefik.local.dev`.
 
 Portainer é opcional. O alvo verifica se o Traefik está saudável e só o inicia se estiver ausente ou sem réplica ativa; com o proxy saudável, preserva a stack atual:
 
@@ -45,7 +45,7 @@ Portainer é opcional. O alvo verifica se o Traefik está saudável e só o inic
 make portainer-up
 ```
 
-Para desligá-lo sem apagar os dados persistidos, use `make portainer-down`. `make traefik-down` para o proxy e interrompe as rotas locais.
+Consulte o [guia de Portainer](portainer/README.md) para aprender quando usar a interface, exercícios de inspeção e os cuidados de segurança. Para desligá-lo sem apagar os dados persistidos, use `make portainer-down`; o Traefik continua ativo. `make traefik-down` para o proxy e interrompe as rotas locais. Esses alvos removem apenas serviços das stacks: não apagam volumes Docker nem os certificados locais. O volume externo `portainer_data` continua disponível quando Portainer estiver desligado.
 
 ## Aplicações de exemplo
 

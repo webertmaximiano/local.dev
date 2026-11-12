@@ -105,3 +105,4 @@ networks:
 secrets:
   traefik_dashboard_users_v2:
     external: true
+    name: ${TRAEFIK_SECRET:?Defina TRAEFIK_SECRET com o nome do Docker Secret BasicAuth}

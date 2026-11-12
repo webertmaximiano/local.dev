@@ -6,7 +6,7 @@ Este guia usa o laboratório genérico deste repositório. Os comandos `make` ge
 
 Tenha Docker Engine, Docker Compose plugin e GNU Make instalados. O laboratório usa Swarm de nó único, Traefik como proxy HTTPS central e Portainer opcional. Um nó permite praticar stacks, serviços, redes, secrets e réplicas, mas réplicas compartilham CPU, memória e disco da mesma máquina; para aprender distribuição real, adicione outro nó Linux ao Swarm.
 
-Confira `make help` e siga [`../infra/swarm/README.md`](../infra/swarm/README.md) para preparar certificados e nomes locais. O alvo `make up` inicializa o Swarm caso necessário e publica somente o Traefik. `make portainer-up` publica Portainer separadamente.
+Confira `make help` e siga [`../infra/swarm/README.md`](../infra/swarm/README.md) para preparar certificados e nomes locais. O alvo `make traefik-up` inicializa o Swarm caso necessário e publica somente o Traefik. Portainer é um painel visual opcional: ligue com `make portainer-up` durante os exercícios e desligue com `make portainer-down` quando terminar. Consulte o [guia de Portainer](../infra/swarm/portainer/README.md) para atividades de inspeção, segurança e economia de recursos.
 
 ## 2. Redes, stacks e roteamento
 

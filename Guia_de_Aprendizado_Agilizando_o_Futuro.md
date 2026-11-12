@@ -54,11 +54,11 @@ Agora, vamos "empacotar" sua aplicação para que ela rode de forma idêntica em
     *   **Sua Missão:**
         1.  Leia `infra/swarm/README.md` e confira se as portas 80/443 estão livres.
         2.  Prepare HTTPS local com `make tls-setup`.
-        3.  Inicie apenas o proxy central com `make up`.
-        4.  Ligue Portainer quando quiser praticar a interface: `make portainer-up`.
+        3.  Inicie apenas o proxy central com `make traefik-up`.
+        4.  Ligue Portainer quando quiser praticar a interface: `make portainer-up`. Use-o para visualizar serviços, tarefas, logs e redes; desligue-o ao terminar com `make portainer-down` para poupar recursos.
         5.  Crie uma aplicação Swarm e conecte-a à rede externa `web-local` com labels em `deploy.labels`.
 
-    Cada stack tem comandos próprios. O Makefile não inicia todas as opções nem para containers de outros projetos.
+    Use os manifests e comandos como configuração reproduzível; Portainer é um apoio visual para aprender e observar operações. O [guia de Portainer](./infra/swarm/portainer/README.md) apresenta exercícios e cuidados de segurança. Cada stack tem comandos próprios. O Makefile não inicia todas as opções nem para containers de outros projetos.
 
 ### Fase 2: Orquestração Local com Kubernetes
 
