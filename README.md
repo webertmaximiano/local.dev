@@ -36,7 +36,7 @@ Este repositório está organizado da seguinte forma:
 * **`/ci-cd-automation`**: Tutoriais e exemplos para CI/CD e GitOps.
 
 **Ambiente local Docker Swarm / Portainer**
-* **`/traefik_portainer`**: caminho canônico para o Traefik central e o Portainer no Swarm local. O tutorial cobre HTTPS com `mkcert` e domínios `servico.local.dev`.
+* **`/infra/swarm`**: laboratório genérico com Traefik central, Portainer opcional e stacks separadas, operadas pelo Makefile da raiz.
 * Use uma única instância local do Traefik nas portas 80/443. Não inicie os caminhos Swarm e Kubernetes ao mesmo tempo nas mesmas portas.
 * **`/traefik`** e **`/kubernetes`**: trilha separada para estudar Traefik como Ingress Controller Kubernetes.
 
@@ -51,7 +51,7 @@ Este repositório está organizado da seguinte forma:
 
 **Dois ambientes distintos, uma instância por ambiente**
 
-- **Docker Swarm local:** use [`traefik_portainer/README.md`](./traefik_portainer/README.md). Este é o proxy central de desenvolvimento, com `*.local.dev` e HTTPS local.
+- **Docker Swarm local:** use [`infra/swarm/README.md`](./infra/swarm/README.md). Este é o proxy central de desenvolvimento, com `*.local.dev` e HTTPS local.
 - **Kubernetes local:** use `/traefik` e `/kubernetes` somente quando estiver estudando Kubernetes. Não publique outro Traefik nas mesmas portas 80/443 enquanto a stack Swarm estiver ativa.
 
 ---
@@ -67,7 +67,7 @@ Para uma experiência guiada, siga os tutoriais passo a passo que preparamos:
 *   **[Guia de Comandos Essenciais do `kubectl`](./kubernetes/kubectl-cheatsheet.md):** Um guia de referência rápida com os comandos mais importantes para o dia a dia com Kubernetes.
 *   **[Tutorial de Traefik com Kubernetes](./traefik/tutorial-kubernetes-traefik.md):** Comece por aqui para configurar o Ingress Controller, que irá expor seus serviços.
 *   **[Guia: Adicionando Novos Domínios Virtuais ao Traefik no Kubernetes](./traefik/tutorial-virtual-domains.md):** Aprenda a configurar domínios personalizados para suas aplicações.
-*   **[Ambiente local Traefik + Portainer](./traefik_portainer/README.md):** Suba o proxy central, configure HTTPS com `mkcert` e conecte projetos em `projeto.local.dev`.
+*   **[Ambiente local Traefik + Portainer](./infra/swarm/README.md):** Suba o proxy central com `make up`; Portainer e futuros serviços ficam em alvos opcionais.
 *   **[Tutorial de Prometheus e Grafana](./monitoring/tutorial-prometheus-grafana.md):** Aprenda a observar a saúde e o desempenho das suas aplicações.
 
 ## 🚀 Como Começar
@@ -84,12 +84,12 @@ cd local.dev
 
 **Passo 2: Siga o tutorial Swarm**
 
-Siga [`traefik_portainer/README.md`](./traefik_portainer/README.md). Confira as portas antes de iniciar: não mantenha duas instâncias locais do Traefik nas portas 80/443.
+Siga [`infra/swarm/README.md`](./infra/swarm/README.md). Confira as portas antes de iniciar: não mantenha duas instâncias locais do Traefik nas portas 80/443.
 
 Isso inclui:
 * geração de certificados `mkcert`
 * criação de redes overlay Swarm
-* deploy das stacks `compose-traefik-swarm.yml` e `compose-portainer-swarm.yml`
+* deploy das stacks `make up` e `make portainer-up`
 
 ### 2. Ambiente Kubernetes (Local)
 

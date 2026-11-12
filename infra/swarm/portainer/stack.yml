@@ -2,10 +2,14 @@ version: '3.8'
 
 services:
   agent:
-    image: portainer/agent:2.33.1
+    image: portainer/agent:2.45.3
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /var/lib/docker/volumes:/var/lib/docker/volumes
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      - type: bind
+        source: "${DOCKER_ROOT_DIR:-/var/lib/docker}/volumes"
+        target: /var/lib/docker/volumes
     networks:
       - portainer_agent_network
     deploy:
@@ -15,7 +19,7 @@ services:
     
 
   portainer:
-    image: portainer/portainer-ce:2.33.1
+    image: portainer/portainer-ce:2.45.3
     command: -H tcp://tasks.agent:9001 --tlsskipverify
     volumes:
       - portainer_data:/data

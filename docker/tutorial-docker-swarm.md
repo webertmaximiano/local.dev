@@ -1,144 +1,67 @@
-````markdown
-# Tutorial Rápido: Docker Swarm — Iniciando localmente (modo manager)
+# Tutorial: Docker Swarm local
 
-Este tutorial mostra os passos básicos para iniciar um ambiente Docker Swarm local, criar redes/volumes/secrets, definir recursos e subir stacks (útil para aprendizado e testes locais como manager).
+Este guia usa o laboratório genérico deste repositório. Os comandos `make` gerenciam somente as stacks do laboratório; não iniciam nem removem aplicações de outros diretórios.
 
-**Pré-requisitos**
-- Docker instalado e usuário com permissão para usá-lo.
-- Acesso ao nó que será manager (máquina local no passo a passo).
+## 1. Conceitos e requisitos
 
-## 1) Inicializar o Swarm (no manager)
+Tenha Docker Engine, Docker Compose plugin e GNU Make instalados. O laboratório usa Swarm de nó único, Traefik como proxy HTTPS central e Portainer opcional. Um nó permite praticar stacks, serviços, redes, secrets e réplicas, mas réplicas compartilham CPU, memória e disco da mesma máquina; para aprender distribuição real, adicione outro nó Linux ao Swarm.
 
-```bash
-# inicializa o swarm no nó atual (substitua IP se necessário)
-docker swarm init --advertise-addr 127.0.0.1
+Confira `make help` e siga [`../infra/swarm/README.md`](../infra/swarm/README.md) para preparar certificados e nomes locais. O alvo `make up` inicializa o Swarm caso necessário e publica somente o Traefik. `make portainer-up` publica Portainer separadamente.
 
-# ver o token para adicionar workers
-docker swarm join-token worker
-```
+## 2. Redes, stacks e roteamento
 
-Anote o comando `docker swarm join --token ...` para adicionar nós workers.
+O laboratório cria as redes overlay `web-local` e `monitoring`; Portainer cria também `portainer_agent_network`. O Traefik usa o provider Swarm, portanto aplicações roteadas devem ser serviços em uma stack Swarm, estar conectadas à rede externa `web-local` e declarar labels dentro de `deploy.labels`.
 
-## 2) Criar redes overlay, volumes e secrets
-
-```bash
-# redes (overlay) que o Traefik e Portainer usam
-# usar --attachable em ambientes de desenvolvimento para conectar containers "normais"
-docker network create --driver overlay --attachable traefik-public
-docker network create --driver overlay --attachable portainer_agent_network
-docker network create --driver overlay --attachable monitoring
-
-# volumes/dirs necessários
-# volume para persistência do Portainer
-docker volume create portainer_data
-
-# volume para logs do Traefik (o stack usa 'traefik_logs' como volume externo)
-docker volume create traefik_logs
-
-# criar secret (exemplo: senha ou certificado)
-echo "minha-senha-secreta" | docker secret create portainer_admin_password -
-
-# listar
-docker network ls
-docker volume ls
-docker secret ls
-```
-
-## 3) Escrever/entender `docker-compose` / stack para Swarm
-
-No Swarm usamos `deploy:` dentro do compose para controlar réplicas, placement e recursos.
-
-Exemplo mínimo (snippet):
+Exemplo mínimo de stack para uma aplicação que escuta na porta 8080:
 
 ```yaml
-version: '3.8'
 services:
   app:
     image: nginx:alpine
     networks:
-      - traefik-public
+      - web-local
     deploy:
-      replicas: 2
-      placement:
-        constraints: [node.platform.os == linux]
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 200M
-        reservations:
-          cpus: '0.25'
-          memory: 100M
+      replicas: 1
+      labels:
+        - traefik.enable=true
+        - traefik.swarm.network=web-local
+        - traefik.http.routers.exemplo.rule=Host(`exemplo.local.dev`)
+        - traefik.http.routers.exemplo.entrypoints=websecure
+        - traefik.http.routers.exemplo.tls=true
+        - traefik.http.services.exemplo.loadbalancer.server.port=80
 
 networks:
-  traefik-public:
+  web-local:
     external: true
 ```
 
-Coloque o ficheiro de stack (ex: `compose-portainer-swarm.yml` e `compose-traefik-swarm.yml`) no diretório e use `docker stack deploy`.
+Cadastre `127.0.0.1 exemplo.local.dev` em `/etc/hosts` e publique a stack com `docker stack deploy -c stack.yml exemplo`. O container precisa escutar na porta declarada; não publique portas no host quando o acesso será pelo Traefik.
 
-## 4) Deploy do stack
-
-```bash
-# deploy Traefik (stack separado)
-docker stack deploy -c traefik_portainer/compose-traefik-swarm.yml traefik
-
-# deploy Portainer + Agent
-docker stack deploy -c traefik_portainer/compose-portainer-swarm.yml portainer
-```
-
-Verificações:
+## 3. Escalar, atualizar e inspecionar
 
 ```bash
-docker stack ls
-docker stack services portainer
-docker service ls
-docker service ps portainer_portainer
+docker service scale exemplo_app=2
+docker service update --image nginx:alpine exemplo_app
+docker service update --rollback exemplo_app
+docker service ps exemplo_app
+docker service logs --follow exemplo_app
 ```
 
-## 5) Atualizar, escalar, remover
+Ajuste `deploy.resources` e placement à capacidade disponível. Escalar para duas réplicas no Swarm local não acrescenta capacidade física.
+
+## 4. Ciclo de vida das stacks de infraestrutura
 
 ```bash
-# escalar um serviço (ex: 3 réplicas)
-docker service update --replicas 3 portainer_portainer
-
-# atualizar imagem
-docker service update --image portainer/portainer-ce:2.33.1 portainer_portainer
-
-# rollback se necessário
-docker service update --rollback portainer_portainer
-
-# remover stack
-docker stack rm portainer
+make status
+make portainer-down
+make traefik-down
 ```
 
-## 6) Boas práticas e dicas rápidas
-- Use `deploy.resources` para reservar/limitar CPU e memória.
-- Use `placement.constraints` para forçar serviços apenas em managers ou nodes linux.
-- Separe stacks: Traefik em um stack próprio facilita updates e segurança.
-- Proteja o dashboard do Traefik (IP allow list, TLS, basic auth) — não deixe em aberto na internet.
-- Não armazene secrets em arquivos de texto; use `docker secret`.
+`make portainer-down` e `make traefik-down` removem apenas a stack correspondente. Os volumes persistentes são mantidos. Não use `docker system prune` como rotina para liberar espaço: primeiro identifique imagens, volumes e dados que podem ser removidos.
 
-## 7) Exemplo prático (Portainer + Agent + Traefik)
+## 5. Segurança operacional
 
-- Já temos exemplos neste repositório:
-  - `traefik_portainer/compose-traefik-swarm.yml`
-  - `traefik_portainer/compose-portainer-swarm.yml`
-
-Siga a ordem: criar redes/volumes/secrets → deploy Traefik → deploy Portainer. Ajuste as labels `Host(...)` para o domínio local ou real que for usar (ex: `portainer.local.dev` ou `portainer.corridajusta.com.br`).
-
-## 8) Comandos úteis de debug
-
-```bash
-docker node ls
-docker service logs --follow <service>
-docker inspect <service|network|volume>
-docker stack ps <stack>
-```
-
----
-
-Se quiser, eu posso:
-- gerar um arquivo de exemplo adicional com comentários; ou
-- executar os comandos (criar redes/volumes) neste host — quer que eu faça isso agora?
-
-````
+- Não versione `.env`, senhas, tokens, chaves privadas, certificados gerados ou backups.
+- O Makefile cria o BasicAuth do dashboard como Docker Secret e solicita a senha no terminal; nunca coloque a senha em um comando ou arquivo versionado.
+- O socket Docker concede controle elevado sobre o host, inclusive quando montado como somente leitura. Limite quem pode acessar o daemon e o Portainer.
+- Mantenha o laboratório local; não exponha dashboard, Portainer ou portas de administração à Internet.

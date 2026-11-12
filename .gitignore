@@ -34,8 +34,11 @@ hello-world-app/skaffold
 !*.env.example
 
 # Generated local TLS material and private keys
+# Keep the old local certificate path ignored until the running stack is redeployed.
 /traefik_portainer/certs/*
 !/traefik_portainer/certs/.gitkeep
+/infra/swarm/traefik/certs/*
+!/infra/swarm/traefik/certs/.gitkeep
 /traefik/certs/*
 !/traefik/certs/.gitignore
 /certs/*
