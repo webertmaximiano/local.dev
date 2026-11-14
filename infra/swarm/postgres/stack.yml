@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: postgis/postgis:18-3.6-alpine
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/local_postgres_admin_password
+      PGDATA: /var/lib/postgresql/18/docker
+    secrets:
+      - local_postgres_admin_password
+    volumes:
+      - local_postgres_data:/var/lib/postgresql
+    networks:
+      db-local:
+        aliases:
+          - local-postgres
+    command:
+      - postgres
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - max_connections=100
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          memory: 1536M
+        reservations:
+          memory: 128M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  db-local:
+    external: true
+    name: db-local
+
+volumes:
+  local_postgres_data:
+    external: true
+
+secrets:
+  local_postgres_admin_password:
+    external: true

@@ -6,13 +6,15 @@ SHELL := /bin/bash
 TRAEFIK_DIR := infra/swarm/traefik
 PORTAINER_DIR := infra/swarm/portainer
 MONITORING_DIR := infra/swarm/observability
+POSTGRES_DIR := infra/swarm/postgres
 TRAEFIK_SECRET_PREFIX := traefik_dashboard_users_v
 GRAFANA_SECRET_PREFIX := grafana_admin_password_v
+POSTGRES_ADMIN_SECRET := local_postgres_admin_password
 
-.PHONY: help swarm-init networks portainer-network portainer-volume tls-setup check-tls traefik-secret traefik-secret-rotate ensure-traefik traefik-up traefik-down portainer-up portainer-down monitoring-secret monitoring-secret-rotate monitoring-up monitoring-down status logs-traefik logs-prometheus logs-grafana
+.PHONY: help swarm-init networks portainer-network portainer-volume tls-setup check-tls traefik-secret traefik-secret-rotate ensure-traefik traefik-up traefik-down portainer-up portainer-down monitoring-secret monitoring-secret-rotate monitoring-up monitoring-down postgres-secret postgres-up postgres-down postgres-test-databases logs-postgres status logs-traefik logs-prometheus logs-grafana
 
 help:
-	@echo "Targets do ambiente local (não iniciam projetos de aplicação):"
+	@echo "Targets do ambiente local:"
 	@echo "  make tls-setup      Instala a CA local e gera o certificado wildcard"
 	@echo "  make traefik-secret-rotate Troca a senha BasicAuth do dashboard Traefik"
 	@echo "  make traefik-up     Sobe/reaplica somente a stack central do Traefik"
@@ -20,6 +22,10 @@ help:
 	@echo "  make portainer-down Para somente Portainer + Agent"
 	@echo "  make monitoring-up  Verifica o Traefik e sobe Prometheus + Grafana (opcional)"
 	@echo "  make monitoring-down Para somente Prometheus + Grafana"
+	@echo "  make postgres-up     Sobe o PostgreSQL compartilhado local"
+	@echo "  make postgres-down   Para o PostgreSQL sem remover seu volume"
+	@echo "  make logs-postgres   Acompanha os logs do PostgreSQL"
+	@echo "  make postgres-test-databases DB=x_testing ROLE=x   Cria os bancos do teste paralelo"
 	@echo "  make monitoring-secret-rotate Atualiza o Secret após trocar a senha na UI Grafana"
 	@echo "  make traefik-down   Para somente o Traefik central"
 	@echo "  make status         Lista stacks e serviços Swarm"
@@ -38,7 +44,7 @@ swarm-init:
 	fi
 
 networks: swarm-init
-	@for network in web-local monitoring; do \
+	@for network in web-local monitoring db-local; do \
 		if docker network ls --format '{{.Name}}' | grep -Fxq "$$network"; then \
 			driver="$$(docker network inspect --format '{{.Driver}}' "$$network")"; \
 			if [[ "$$driver" != "overlay" ]]; then \
@@ -48,9 +54,15 @@ networks: swarm-init
 				attachable="$$(docker network inspect --format '{{.Attachable}}' "$$network")"; \
 				[[ "$$attachable" == "true" ]] || { echo "A rede web-local precisa ser attachable." >&2; exit 1; }; \
 			fi; \
+			if [[ "$$network" == "db-local" ]]; then \
+				internal="$$(docker network inspect --format '{{.Internal}}' "$$network")"; \
+				[[ "$$internal" == "true" ]] || { echo "A rede db-local precisa ser interna." >&2; exit 1; }; \
+			fi; \
 		else \
 			if [[ "$$network" == "web-local" ]]; then \
 				docker network create --driver overlay --attachable "$$network"; \
+			elif [[ "$$network" == "db-local" ]]; then \
+				docker network create --driver overlay --attachable --internal "$$network"; \
 			else \
 				docker network create --driver overlay "$$network"; \
 			fi; \
@@ -142,6 +154,31 @@ monitoring-up: ensure-traefik monitoring-secret
 
 monitoring-down:
 	@docker stack rm observability
+
+# Senha aleatória gerada diretamente no Docker Secret; seu valor nunca é exibido.
+postgres-secret: swarm-init
+	@if ! docker secret ls --format '{{.Name}}' | grep -Fxq '$(POSTGRES_ADMIN_SECRET)'; then \
+		command -v openssl >/dev/null || { echo "Instale openssl para gerar o segredo local." >&2; exit 1; }; \
+		openssl rand -hex 32 | docker secret create $(POSTGRES_ADMIN_SECRET) - >/dev/null; \
+	else \
+		echo "Docker Secret administrativo do PostgreSQL já existe."; \
+	fi
+
+postgres-up: networks postgres-secret
+	@if ! docker volume ls --format '{{.Name}}' | grep -Fxq local_postgres_data; then docker volume create local_postgres_data >/dev/null; fi
+	@cd $(POSTGRES_DIR) && docker stack deploy -c stack.yml postgres
+
+postgres-down:
+	@docker stack rm postgres
+
+# Bancos de teste do modo paralelo (php artisan test --parallel). Idempotente; só cria.
+# Uso: make postgres-test-databases DB=estouon_food_testing ROLE=estouon [COUNT=4] [EXTENSIONS="postgis pg_trgm unaccent uuid-ossp"]
+postgres-test-databases:
+	@[[ -n "$(DB)" && -n "$(ROLE)" ]] || { echo "Uso: make postgres-test-databases DB=<banco>_testing ROLE=<role> [COUNT=4] [EXTENSIONS=\"postgis pg_trgm\"]" >&2; exit 1; }
+	@$(POSTGRES_DIR)/provision-test-databases.sh "$(DB)" "$(ROLE)" "$(or $(COUNT),4)" "$(EXTENSIONS)"
+
+logs-postgres:
+	@docker service logs --follow postgres_postgres
 
 # Troque primeiro a senha na UI do Grafana; este alvo sincroniza o Secret de recuperação.
 monitoring-secret-rotate: ensure-traefik

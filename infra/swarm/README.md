@@ -7,7 +7,7 @@ Este ambiente é genérico para estudo e desenvolvimento; não contém comandos 
 - **Traefik:** stack base, única dona das portas 80/443.
 - **Portainer + Agent:** opcional; ligue apenas para praticar a interface de gerenciamento.
 - **Monitoramento:** Prometheus e Grafana estão disponíveis como stack opcional em [`observability/`](observability/). Ela não inicia junto com o Traefik e pode ser desligada quando não estiver em uso.
-- **Bancos:** ainda não há stack de banco implementada nesta trilha; os exemplos Kubernetes ficam em `kubernetes/`.
+- **PostgreSQL compartilhado:** stack opcional em [`postgres/`](postgres/), com rede interna `db-local`, volume persistente e sem porta publicada no host. As aplicações criam databases e roles próprios.
 
 Cada stack tem diretório e ciclo de vida próprios. O Makefile não inicia tudo de uma vez nem para containers de outros projetos.
 
@@ -51,6 +51,8 @@ make portainer-up
 Consulte o [guia de Portainer](portainer/README.md) para aprender quando usar a interface, exercícios de inspeção e os cuidados de segurança. Para desligá-lo sem apagar os dados persistidos, use `make portainer-down`; o Traefik continua ativo. `make traefik-down` para o proxy e interrompe as rotas locais. Esses alvos removem apenas serviços das stacks: não apagam volumes Docker nem os certificados locais. O volume externo `portainer_data` continua disponível quando Portainer estiver desligado.
 
 Prometheus e Grafana também são opcionais. `make monitoring-up` verifica e inicia o Traefik se necessário, solicita a senha inicial do Grafana e sobe somente a stack `observability`. Para parar apenas o monitoramento, use `make monitoring-down`; os dados persistidos continuam nos volumes. Veja o [tutorial de monitoramento](observability/README.md) para consultas, labels, alertas, logs e cuidados com dados locais.
+
+O PostgreSQL compartilhado pode ser iniciado com `make postgres-up`. O alvo cria a rede interna `db-local`, um Docker Secret administrativo aleatório e o volume `local_postgres_data`; não publica a porta 5432. Para pará-lo, use `make postgres-down`: isso remove somente o serviço e preserva volume e secret. Veja o [guia do PostgreSQL](postgres/README.md) antes de conectar aplicações.
 
 ## Aplicações de exemplo
 
