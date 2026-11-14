@@ -44,6 +44,10 @@ networks:
 
 No Swarm, Traefik lê labels do serviço em `deploy.labels`, e a porta interna deve ser declarada. Não publique a porta do app no host se o acesso será pelo proxy. [Documentação oficial do provider Swarm](https://doc.traefik.io/traefik/reference/install-configuration/providers/swarm/).
 
+### Aplicação em Docker Compose standalone
+
+O provider Swarm não descobre containers Compose standalone pelas labels do Compose. Para uma rota local temporária, conecte o container à rede `web-local` e crie uma configuração dinâmica em `config/traefik/` apontando para o nome DNS e a porta interna do container. O PDV usa `config/traefik/pdv-local.yml` → `pdv-local-app:8000` e o EstouOn Food usa `config/traefik/estouon-local.yml` → `estouon-backend-app:8000` (`https://estouon.local.dev`) até a aplicação ser executada como serviço Swarm com labels; remova essa rota temporária ao fazer a troca.
+
 ## Segurança e limites
 
 - O dashboard usa BasicAuth e Docker Secret. O usuário padrão criado pelo laboratório é `admin`; a senha é definida no terminal. O popup do navegador não troca a credencial no servidor: para trocar a senha ou se você não lembra a atual, execute `make traefik-secret-rotate` na raiz. O comando solicita a nova senha sem exibi-la, cria a próxima versão do Secret e reaplica somente o Traefik. Confirme o login e o serviço saudável antes de remover manualmente o Secret antigo com `docker secret rm NOME_ANTIGO`. Nunca remova a versão antiga antes da validação.

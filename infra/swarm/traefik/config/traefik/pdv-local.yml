@@ -1,0 +1,14 @@
+http:
+  routers:
+    pdv-local:
+      rule: Host(`pdv.local.dev`)
+      entryPoints:
+        - websecure
+      service: pdv-local
+      tls: {}
+
+  services:
+    pdv-local:
+      loadBalancer:
+        servers:
+          - url: http://pdv-local-app:8000

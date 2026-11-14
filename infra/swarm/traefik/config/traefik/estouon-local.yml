@@ -1,0 +1,30 @@
+# Rota temporária do EstouOn local (Compose standalone, como o PDV em pdv-local.yml).
+# Container estouon-backend-app ligado à rede web-local; remover quando virar serviço Swarm.
+http:
+  routers:
+    # Reverb (WebSocket do Laravel Echo): wss://estouon.local.dev/app e /apps.
+    estouon-local-reverb:
+      rule: Host(`estouon.local.dev`) && (PathPrefix(`/app/`) || PathPrefix(`/apps/`))
+      entryPoints:
+        - websecure
+      service: estouon-local-reverb
+      priority: 100
+      tls: {}
+
+    estouon-local:
+      rule: Host(`estouon.local.dev`)
+      entryPoints:
+        - websecure
+      service: estouon-local
+      tls: {}
+
+  services:
+    estouon-local-reverb:
+      loadBalancer:
+        servers:
+          - url: http://estouon-backend-reverb:8080
+
+    estouon-local:
+      loadBalancer:
+        servers:
+          - url: http://estouon-backend-app:8000
